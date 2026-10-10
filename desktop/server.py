@@ -38,24 +38,33 @@ class SecureWebSocketServer:
         self.active_pairing_session = None
 
         self.authenticated_clients = set()
+        self.clients_by_id = {}  # device_id -> {"ws": ws, "name": name, "connected_at": timestamp}
         self.pending_clients = set()
         self.runner = None
         self.site = None
 
     def _find_apk_path(self) -> str:
         candidates = [
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "android", "app", "build", "outputs", "apk", "release", "app-release.apk"),
+            os.path.join(os.getcwd(), "android", "app", "build", "outputs", "apk", "release", "app-release.apk"),
             os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "android", "app", "build", "outputs", "apk", "debug", "app-debug.apk"),
             os.path.join(os.getcwd(), "android", "app", "build", "outputs", "apk", "debug", "app-debug.apk"),
+            os.path.join(os.getcwd(), "UniversalClipboard-v1.1.0.apk"),
             os.path.join(os.getcwd(), "app-debug.apk"),
         ]
         import sys
         if hasattr(sys, "executable") and sys.executable:
             exe_dir = os.path.dirname(os.path.abspath(sys.executable))
+            candidates.append(os.path.join(exe_dir, "UniversalClipboard-v1.1.0.apk"))
+            candidates.append(os.path.join(exe_dir, "app-release.apk"))
             candidates.append(os.path.join(exe_dir, "app-debug.apk"))
+            candidates.append(os.path.join(exe_dir, "..", "android", "app", "build", "outputs", "apk", "release", "app-release.apk"))
             candidates.append(os.path.join(exe_dir, "..", "android", "app", "build", "outputs", "apk", "debug", "app-debug.apk"))
         if hasattr(sys, "_MEIPASS"):
-            candidates.insert(0, os.path.join(sys._MEIPASS, "app-debug.apk"))
-            candidates.insert(1, os.path.join(sys._MEIPASS, "android", "app-debug.apk"))
+            candidates.insert(0, os.path.join(sys._MEIPASS, "UniversalClipboard-v1.1.0.apk"))
+            candidates.insert(1, os.path.join(sys._MEIPASS, "app-release.apk"))
+            candidates.insert(2, os.path.join(sys._MEIPASS, "app-debug.apk"))
+            candidates.insert(3, os.path.join(sys._MEIPASS, "android", "app-debug.apk"))
         for p in candidates:
             if os.path.isfile(p):
                 return os.path.abspath(p)
@@ -93,7 +102,8 @@ class SecureWebSocketServer:
             logger.warning(f"Connection rejected: max clients reached ({request.remote})")
             return web.Response(status=503, text="Server busy")
 
-        ws = web.WebSocketResponse(max_msg_size=MAX_IMAGE_SIZE_BYTES)
+        # 25-second heartbeat detects dropped Wi-Fi connections reliably
+        ws = web.WebSocketResponse(max_msg_size=MAX_IMAGE_SIZE_BYTES, heartbeat=25.0)
         await ws.prepare(request)
 
         self.pending_clients.add(ws)
@@ -149,6 +159,23 @@ class SecureWebSocketServer:
                                 self.pending_clients.discard(ws)
                                 self.authenticated_clients.add(ws)
 
+                                # Supersede any previous connection from this client ID
+                                device_id = client_info["id"]
+                                if device_id in self.clients_by_id:
+                                    old_entry = self.clients_by_id[device_id]
+                                    old_ws = old_entry.get("ws")
+                                    if old_ws and not old_ws.closed and old_ws != ws:
+                                        logger.info(f"Superseding previous socket for device {device_id}")
+                                        self.authenticated_clients.discard(old_ws)
+                                        asyncio.create_task(old_ws.close(code=1000, message=b"Superseded by new connection"))
+
+                                import time
+                                self.clients_by_id[device_id] = {
+                                    "ws": ws,
+                                    "name": client_info["name"],
+                                    "connected_at": time.time()
+                                }
+
                                 ok_data = {
                                     "v": PROTOCOL_VERSION,
                                     "type": "auth_ok",
@@ -200,11 +227,39 @@ class SecureWebSocketServer:
             was_auth = ws in self.authenticated_clients
             self.authenticated_clients.discard(ws)
 
-            logger.info(f"Client disconnected: {client_remote} (was_auth={was_auth})")
-            if was_auth and self.on_client_disconnected:
+            # Check if this socket was the authoritative connection for the client
+            device_id = client_info["id"]
+            is_active_socket = False
+            if device_id in self.clients_by_id and self.clients_by_id[device_id].get("ws") == ws:
+                del self.clients_by_id[device_id]
+                is_active_socket = True
+
+            logger.info(f"Client socket closed: {client_remote} (id={device_id}, was_auth={was_auth}, active={is_active_socket})")
+            # Only trigger on_client_disconnected if this was the authoritative socket for that client
+            if was_auth and is_active_socket and self.on_client_disconnected:
                 self.on_client_disconnected(client_info["id"])
 
         return ws
+
+    def get_active_client_info(self) -> list:
+        """Returns list of active client information dictionaries."""
+        return [
+            {"id": dev_id, "name": data.get("name", "Android Device")}
+            for dev_id, data in self.clients_by_id.items()
+            if not data.get("ws").closed
+        ]
+
+    async def disconnect_all_clients(self):
+        """Cleanly disconnects all connected clients."""
+        for dev_id, data in list(self.clients_by_id.items()):
+            ws = data.get("ws")
+            if ws and not ws.closed:
+                try:
+                    await ws.close(code=1000, message=b"Server requested disconnect")
+                except Exception:
+                    pass
+        self.authenticated_clients.clear()
+        self.clients_by_id.clear()
 
     async def broadcast(self, message: str):
         """Broadcasts an encrypted payload strictly to authenticated clients."""

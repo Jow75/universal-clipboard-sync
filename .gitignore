@@ -15,4 +15,5 @@ local.properties
 .DS_Store
 venv/
 .env
-
+*.apk
+*.exe

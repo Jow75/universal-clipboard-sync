@@ -1,18 +1,22 @@
 """
-Universal Clipboard — QR Pairing Manager & Desktop Pairing Dialog
-Creates ephemeral, short-lived QR pairing sessions and renders
-a clean pairing window with countdown timer and instructions.
+Universal Clipboard — Desktop Connection & QR Pairing Manager
+Renders a modern, responsive status and pairing window with:
+1. Ephemeral QR Pairing with countdown timer and single-use security
+2. Connected Device View with green indicator, device name, and actions
+3. Local Wi-Fi & Official GitHub APK Download QR codes
+4. Thread-safe event dispatching between asyncio server and Tkinter UI
 """
 import os
 import time
 import uuid
 import json
 import logging
-import threading
+import queue
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 import qrcode
+from desktop.version import APP_NAME, APP_VERSION, CANONICAL_DOWNLOAD_PAGE
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +43,14 @@ class PairingSession:
     def is_expired(self) -> bool:
         return time.time() > self.expires_at
 
+    def refresh(self):
+        """Generates a fresh ephemeral token and resets timer."""
+        self.session_id = str(uuid.uuid4())
+        self.ephemeral_token = os.urandom(32).hex()
+        self.expires_at = int(time.time()) + QR_SESSION_TTL_SECONDS
+        self.is_completed = False
+        self.is_cancelled = False
+
     def to_qr_payload_string(self) -> str:
         """Returns compact JSON string formatted for QR encoding."""
         payload = {
@@ -54,7 +66,7 @@ class PairingSession:
         }
         return json.dumps(payload, separators=(',', ':'))
 
-    def generate_qr_image(self, box_size: int = 8, border: int = 2) -> Image.Image:
+    def generate_qr_image(self, box_size: int = 7, border: int = 2) -> Image.Image:
         """Renders QR code as a PIL Image."""
         qr = qrcode.QRCode(
             version=None,
@@ -67,34 +79,55 @@ class PairingSession:
         return qr.make_image(fill_color="#0D1B2A", back_color="#FFFFFF").convert("RGBA")
 
 
-class PairingWindow:
-    """Displays desktop GUI window supporting the two-QR onboarding experience:
-    1. App Download QR (Direct local Wi-Fi download from desktop)
-    2. Ephemeral Device Pairing QR (with countdown timer)
+class DesktopConnectionWindow:
+    """Desktop status and pairing window that manages connection states:
+    - WAITING_FOR_PAIRING: Displays pairing QR code and countdown
+    - CONNECTED: Replaces QR with green status, device name, and sync controls
+    - DOWNLOAD: Shows direct Wi-Fi & official GitHub release download links
     """
 
-    def __init__(self, session: PairingSession, on_cancel=None):
+    def __init__(self, session: PairingSession, on_cancel=None, on_disconnect=None, on_refresh_session=None):
         self.session = session
         self.on_cancel = on_cancel
+        self.on_disconnect = on_disconnect
+        self.on_refresh_session = on_refresh_session
         self.download_url = f"http://{session.ip}:{session.port}/download"
+        self.canonical_download_url = CANONICAL_DOWNLOAD_PAGE
+
         self.root = None
+        self.event_queue = queue.Queue()
+        self.is_connected = False
+        self.connected_device_name = "Android Phone"
+        self.connected_device_id = ""
+        self.last_sync_info = "Ready to sync"
+
+        # Widget references
         self.timer_label = None
         self.pair_photo_img = None
         self.download_photo_img = None
         self.pair_frame = None
+        self.connected_frame = None
         self.download_frame = None
+        self.lbl_qr_pair = None
+        self.connected_device_label = None
+        self.last_sync_label = None
         self.btn_tab_pair = None
+        self.btn_tab_connected = None
         self.btn_tab_download = None
 
+    def post_event(self, event_type: str, data=None):
+        """Thread-safe event posting from server or other threads."""
+        self.event_queue.put((event_type, data))
+
     def show(self):
-        """Runs the dialog in the current or dedicated GUI thread."""
+        """Initializes and runs the window."""
         self.root = tk.Toplevel() if tk._default_root else tk.Tk()
-        self.root.title("Universal Clipboard — Connect & Pair")
-        self.root.geometry("450x640")
+        self.root.title(f"{APP_NAME} v{APP_VERSION}")
+        self.root.geometry("460x660")
         self.root.resizable(False, False)
         self.root.configure(bg="#0D1B2A")
 
-        # Bring window to front
+        # Bring window to front initially
         self.root.attributes("-topmost", True)
         self.root.after_idle(self.root.attributes, "-topmost", False)
 
@@ -103,84 +136,135 @@ class PairingWindow:
         tab_nav_frame.pack(fill="x", padx=16, pady=(16, 8))
 
         self.btn_tab_pair = tk.Button(
-            tab_nav_frame, text="🔗 Step 2: Pair Device",
-            font=("Segoe UI", 10, "bold"), fg="#FFFFFF", bg="#0066CC",
+            tab_nav_frame, text="🔗 Pair Phone",
+            font=("Segoe UI", 9, "bold"), fg="#FFFFFF", bg="#0066CC",
             activebackground="#0055AA", activeforeground="#FFFFFF",
-            bd=0, padx=12, pady=6, cursor="hand2",
+            bd=0, padx=8, pady=6, cursor="hand2",
             command=self._show_pair_tab
         )
         self.btn_tab_pair.pack(side="left", expand=True, fill="x", padx=2)
 
-        self.btn_tab_download = tk.Button(
-            tab_nav_frame, text="📱 Step 1: Download App",
-            font=("Segoe UI", 10, "bold"), fg="#7B8FA8", bg="#1A2A3E",
+        self.btn_tab_connected = tk.Button(
+            tab_nav_frame, text="🟢 Connected",
+            font=("Segoe UI", 9, "bold"), fg="#7B8FA8", bg="#1A2A3E",
             activebackground="#243750", activeforeground="#FFFFFF",
-            bd=0, padx=12, pady=6, cursor="hand2",
+            bd=0, padx=8, pady=6, cursor="hand2",
+            command=self._show_connected_tab
+        )
+        self.btn_tab_connected.pack(side="left", expand=True, fill="x", padx=2)
+
+        self.btn_tab_download = tk.Button(
+            tab_nav_frame, text="📱 Download App",
+            font=("Segoe UI", 9, "bold"), fg="#7B8FA8", bg="#1A2A3E",
+            activebackground="#243750", activeforeground="#FFFFFF",
+            bd=0, padx=8, pady=6, cursor="hand2",
             command=self._show_download_tab
         )
-        self.btn_tab_download.pack(side="right", expand=True, fill="x", padx=2)
+        self.btn_tab_download.pack(side="left", expand=True, fill="x", padx=2)
 
-        # Main Container
+        # Main Container Frames
         self.pair_frame = tk.Frame(self.root, bg="#0D1B2A")
+        self.connected_frame = tk.Frame(self.root, bg="#0D1B2A")
         self.download_frame = tk.Frame(self.root, bg="#0D1B2A")
 
         self._build_pair_tab()
+        self._build_connected_tab()
         self._build_download_tab()
 
-        # Start with Pairing Tab active
-        self._show_pair_tab()
+        if self.is_connected:
+            self._show_connected_tab()
+        else:
+            self._show_pair_tab()
 
-        self.root.protocol("WM_DELETE_WINDOW", self.close)
+        # Closing window minimizes to tray instead of quitting
+        self.root.protocol("WM_DELETE_WINDOW", self.hide_to_tray)
+
+        # Start timer and event queue consumer loop
         self._update_countdown()
+        self._process_events()
+
         if not tk._default_root or self.root == tk._default_root:
             self.root.mainloop()
 
+    def _process_events(self):
+        """Pulls events from thread-safe queue and updates Tk widgets."""
+        if not self.root or not self.root.winfo_exists():
+            return
+
+        try:
+            while not self.event_queue.empty():
+                event_type, data = self.event_queue.get_nowait()
+                if event_type == "client_connected":
+                    client_name = data.get("name", "Android Phone") if isinstance(data, dict) else str(data)
+                    self.set_connected(client_name)
+                elif event_type == "client_disconnected":
+                    self.set_disconnected()
+                elif event_type == "sync_info":
+                    self.set_sync_info(str(data))
+                elif event_type == "refresh_qr":
+                    self._refresh_qr_display()
+        except Exception as e:
+            logger.error(f"Error processing GUI event: {e}")
+
+        self.root.after(50, self._process_events)
+
     def _show_pair_tab(self):
+        self.connected_frame.pack_forget()
         self.download_frame.pack_forget()
         self.pair_frame.pack(fill="both", expand=True)
         self.btn_tab_pair.configure(bg="#0066CC", fg="#FFFFFF")
+        self.btn_tab_connected.configure(bg="#1A2A3E", fg="#7B8FA8")
+        self.btn_tab_download.configure(bg="#1A2A3E", fg="#7B8FA8")
+
+    def _show_connected_tab(self):
+        self.pair_frame.pack_forget()
+        self.download_frame.pack_forget()
+        self.connected_frame.pack(fill="both", expand=True)
+        self.btn_tab_connected.configure(bg="#008855", fg="#FFFFFF")
+        self.btn_tab_pair.configure(bg="#1A2A3E", fg="#7B8FA8")
         self.btn_tab_download.configure(bg="#1A2A3E", fg="#7B8FA8")
 
     def _show_download_tab(self):
         self.pair_frame.pack_forget()
+        self.connected_frame.pack_forget()
         self.download_frame.pack(fill="both", expand=True)
         self.btn_tab_download.configure(bg="#0066CC", fg="#FFFFFF")
         self.btn_tab_pair.configure(bg="#1A2A3E", fg="#7B8FA8")
+        self.btn_tab_connected.configure(bg="#1A2A3E", fg="#7B8FA8")
 
     def _build_pair_tab(self):
-        # Title Frame
         title_frame = tk.Frame(self.pair_frame, bg="#0D1B2A")
-        title_frame.pack(pady=(12, 4))
+        title_frame.pack(pady=(8, 2))
 
         lbl_title = tk.Label(
-            title_frame, text="Pair Your Phone",
-            font=("Segoe UI", 16, "bold"), fg="#FFFFFF", bg="#0D1B2A"
+            title_frame, text="📱 Scan to Pair Phone",
+            font=("Segoe UI", 15, "bold"), fg="#FFFFFF", bg="#0D1B2A"
         )
         lbl_title.pack()
 
         lbl_sub = tk.Label(
             title_frame,
             text="Open Universal Clipboard on phone and tap 'Scan QR Code'",
-            font=("Segoe UI", 9), fg="#7B8FA8", bg="#0D1B2A", wraplength=380
+            font=("Segoe UI", 9), fg="#8EA5C0", bg="#0D1B2A", wraplength=380
         )
         lbl_sub.pack(pady=(2, 0))
 
         # QR Code Container
-        qr_frame = tk.Frame(self.pair_frame, bg="#FFFFFF", padx=10, pady=10, bd=0)
-        qr_frame.pack(pady=12)
+        qr_frame = tk.Frame(self.pair_frame, bg="#FFFFFF", padx=8, pady=8, bd=0)
+        qr_frame.pack(pady=10)
 
         qr_pil_img = self.session.generate_qr_image(box_size=6, border=2)
         self.pair_photo_img = ImageTk.PhotoImage(qr_pil_img)
-        lbl_qr = tk.Label(qr_frame, image=self.pair_photo_img, bg="#FFFFFF")
-        lbl_qr.pack()
+        self.lbl_qr_pair = tk.Label(qr_frame, image=self.pair_photo_img, bg="#FFFFFF")
+        self.lbl_qr_pair.pack()
 
         # Connection detail pill
-        info_frame = tk.Frame(self.pair_frame, bg="#1A2A3E", padx=12, pady=6)
-        info_frame.pack(pady=4)
+        info_frame = tk.Frame(self.pair_frame, bg="#1A2A3E", padx=12, pady=4)
+        info_frame.pack(pady=2)
 
         lbl_ip = tk.Label(
-            info_frame, text=f"Computer: {self.session.server_name} ({self.session.ip})",
-            font=("Segoe UI", 9, "bold"), fg="#00DD88", bg="#1A2A3E"
+            info_frame, text=f"Workstation: {self.session.server_name}  |  {self.session.ip}:{self.session.port}",
+            font=("Segoe UI", 8, "bold"), fg="#00DD88", bg="#1A2A3E"
         )
         lbl_ip.pack()
 
@@ -188,37 +272,146 @@ class PairingWindow:
         self.timer_label = tk.Label(
             self.pair_frame, text="", font=("Segoe UI", 10), fg="#FFAA00", bg="#0D1B2A"
         )
-        self.timer_label.pack(pady=(6, 12))
+        self.timer_label.pack(pady=(4, 6))
 
-        # Cancel Button
-        btn_cancel = tk.Button(
-            self.pair_frame, text="Cancel", font=("Segoe UI", 10, "bold"),
-            fg="#FFFFFF", bg="#CC2244", activebackground="#AA1133",
-            activeforeground="#FFFFFF", bd=0, padx=20, pady=6,
-            cursor="hand2", command=self.close
+        # Action Buttons
+        btn_box = tk.Frame(self.pair_frame, bg="#0D1B2A")
+        btn_box.pack(pady=4)
+
+        btn_refresh = tk.Button(
+            btn_box, text="🔄 Refresh Code", font=("Segoe UI", 9, "bold"),
+            fg="#FFFFFF", bg="#204060", activebackground="#153048",
+            activeforeground="#FFFFFF", bd=0, padx=12, pady=5,
+            cursor="hand2", command=self.refresh_session
         )
-        btn_cancel.pack(pady=(0, 12))
+        btn_refresh.pack(side="left", padx=4)
+
+        btn_min = tk.Button(
+            btn_box, text="Minimize to Tray", font=("Segoe UI", 9),
+            fg="#CCD8E8", bg="#1A2A3E", activebackground="#243750",
+            activeforeground="#FFFFFF", bd=0, padx=12, pady=5,
+            cursor="hand2", command=self.hide_to_tray
+        )
+        btn_min.pack(side="left", padx=4)
+
+        lbl_sec = tk.Label(
+            self.pair_frame,
+            text="🔒 Ephemeral pairing session expires in 3 minutes.\nMaster key is encrypted and stored in Windows DPAPI.",
+            font=("Segoe UI", 8), fg="#5D738E", bg="#0D1B2A", justify="center"
+        )
+        lbl_sec.pack(pady=(6, 0))
+
+    def _build_connected_tab(self):
+        title_frame = tk.Frame(self.connected_frame, bg="#0D1B2A")
+        title_frame.pack(pady=(16, 6))
+
+        # Big positive indicator
+        status_badge = tk.Frame(title_frame, bg="#004D2C", padx=16, pady=6)
+        status_badge.pack(pady=(0, 8))
+
+        lbl_status = tk.Label(
+            status_badge, text="🟢 CONNECTED TO ANDROID",
+            font=("Segoe UI", 13, "bold"), fg="#00FF99", bg="#004D2C"
+        )
+        lbl_status.pack()
+
+        self.connected_device_label = tk.Label(
+            title_frame, text=f"📱 {self.connected_device_name}",
+            font=("Segoe UI", 15, "bold"), fg="#FFFFFF", bg="#0D1B2A"
+        )
+        self.connected_device_label.pack(pady=(2, 2))
+
+        lbl_connected_sub = tk.Label(
+            title_frame,
+            text="Active AES-256-GCM encrypted link over local Wi-Fi",
+            font=("Segoe UI", 9), fg="#00DD88", bg="#0D1B2A"
+        )
+        lbl_connected_sub.pack()
+
+        # Info card
+        card = tk.Frame(self.connected_frame, bg="#1A2A3E", padx=16, pady=12)
+        card.pack(pady=12, padx=20, fill="x")
+
+        lbl_c1 = tk.Label(
+            card, text=f"Desktop Host: {self.session.server_name} ({self.session.ip}:{self.session.port})",
+            font=("Segoe UI", 9), fg="#CCD8E8", bg="#1A2A3E", anchor="w"
+        )
+        lbl_c1.pack(fill="x", pady=2)
+
+        lbl_c2 = tk.Label(
+            card, text="Security: AES-256-GCM + DPAPI Key Persistence",
+            font=("Segoe UI", 9), fg="#CCD8E8", bg="#1A2A3E", anchor="w"
+        )
+        lbl_c2.pack(fill="x", pady=2)
+
+        self.last_sync_label = tk.Label(
+            card, text=f"Sync Activity: {self.last_sync_info}",
+            font=("Segoe UI", 9, "bold"), fg="#00DD88", bg="#1A2A3E", anchor="w"
+        )
+        self.last_sync_label.pack(fill="x", pady=(4, 2))
+
+        # Instructions
+        inst_card = tk.Frame(self.connected_frame, bg="#112233", padx=14, pady=10)
+        inst_card.pack(pady=6, padx=20, fill="x")
+
+        lbl_guide = tk.Label(
+            inst_card,
+            text="• PC ➔ Phone: Copy anything (Ctrl+C) to auto-sync.\n"
+                 "• Phone ➔ PC: Tap '[ 📋 Send to PC ]' on notification shade,\n"
+                 "  or enable Seamless Auto-Sync in phone Accessibility.\n"
+                 "• Paste anywhere on Windows using Ctrl+V.",
+            font=("Segoe UI", 8), fg="#8EA5C0", bg="#112233", justify="left", anchor="w"
+        )
+        lbl_guide.pack(fill="x")
+
+        # Action Buttons
+        btn_box = tk.Frame(self.connected_frame, bg="#0D1B2A")
+        btn_box.pack(pady=14)
+
+        btn_pair_new = tk.Button(
+            btn_box, text="🔗 Pair Another Phone", font=("Segoe UI", 9, "bold"),
+            fg="#FFFFFF", bg="#0066CC", activebackground="#0055AA",
+            activeforeground="#FFFFFF", bd=0, padx=12, pady=6,
+            cursor="hand2", command=self._show_pair_tab
+        )
+        btn_pair_new.pack(side="left", padx=4)
+
+        btn_disconnect = tk.Button(
+            btn_box, text="🔌 Disconnect", font=("Segoe UI", 9, "bold"),
+            fg="#FFFFFF", bg="#CC2244", activebackground="#AA1133",
+            activeforeground="#FFFFFF", bd=0, padx=12, pady=6,
+            cursor="hand2", command=self._on_disconnect_click
+        )
+        btn_disconnect.pack(side="left", padx=4)
+
+        btn_min = tk.Button(
+            btn_box, text="Minimize to Tray", font=("Segoe UI", 9),
+            fg="#CCD8E8", bg="#1A2A3E", activebackground="#243750",
+            activeforeground="#FFFFFF", bd=0, padx=12, pady=6,
+            cursor="hand2", command=self.hide_to_tray
+        )
+        btn_min.pack(side="left", padx=4)
 
     def _build_download_tab(self):
         title_frame = tk.Frame(self.download_frame, bg="#0D1B2A")
-        title_frame.pack(pady=(12, 4))
+        title_frame.pack(pady=(10, 4))
 
         lbl_title = tk.Label(
-            title_frame, text="Download Mobile App",
-            font=("Segoe UI", 16, "bold"), fg="#FFFFFF", bg="#0D1B2A"
+            title_frame, text="Download Universal Clipboard APK",
+            font=("Segoe UI", 14, "bold"), fg="#FFFFFF", bg="#0D1B2A"
         )
         lbl_title.pack()
 
         lbl_sub = tk.Label(
             title_frame,
-            text="Scan with your phone's standard camera to download the APK",
-            font=("Segoe UI", 9), fg="#7B8FA8", bg="#0D1B2A", wraplength=380
+            text="Scan with your phone's camera to install the mobile app",
+            font=("Segoe UI", 9), fg="#8EA5C0", bg="#0D1B2A", wraplength=380
         )
         lbl_sub.pack(pady=(2, 0))
 
-        # QR Code Container for Download Link
-        qr_frame = tk.Frame(self.download_frame, bg="#FFFFFF", padx=10, pady=10, bd=0)
-        qr_frame.pack(pady=12)
+        # QR Code Container
+        qr_frame = tk.Frame(self.download_frame, bg="#FFFFFF", padx=8, pady=8, bd=0)
+        qr_frame.pack(pady=10)
 
         qr = qrcode.QRCode(
             version=None,
@@ -236,69 +429,127 @@ class PairingWindow:
 
         # Instructions Frame
         inst_frame = tk.Frame(self.download_frame, bg="#1A2A3E", padx=12, pady=8)
-        inst_frame.pack(pady=6, padx=24, fill="x")
+        inst_frame.pack(pady=4, padx=20, fill="x")
 
         lbl_inst = tk.Label(
             inst_frame,
-            text=f"1. Scan with phone's camera to download APK directly from PC.\n"
-                 f"2. URL: {self.download_url}\n"
-                 f"3. Install APK, open app, then switch to 'Step 2: Pair Device'.",
-            font=("Segoe UI", 9), fg="#CCD8E8", bg="#1A2A3E", justify="left"
+            text=f"Direct Local Wi-Fi Download:\n{self.download_url}\n\n"
+                 f"Official GitHub Release Download:\n{self.canonical_download_url}",
+            font=("Segoe UI", 8), fg="#CCD8E8", bg="#1A2A3E", justify="left"
         )
         lbl_inst.pack()
 
-        # Switch to Pair Button
-        btn_next = tk.Button(
-            self.download_frame, text="Ready? Go to Step 2 ➔",
-            font=("Segoe UI", 10, "bold"), fg="#FFFFFF", bg="#008855",
+        btn_ready = tk.Button(
+            self.download_frame, text="Ready to Pair? Go to Step 2 ➔",
+            font=("Segoe UI", 9, "bold"), fg="#FFFFFF", bg="#008855",
             activebackground="#006644", activeforeground="#FFFFFF",
-            bd=0, padx=20, pady=6, cursor="hand2",
+            bd=0, padx=16, pady=6, cursor="hand2",
             command=self._show_pair_tab
         )
-        btn_next.pack(pady=(8, 12))
+        btn_ready.pack(pady=(8, 4))
 
     def _update_countdown(self):
         if not self.root or not self.root.winfo_exists():
             return
         remaining = self.session.expires_at - int(time.time())
         if remaining <= 0 or self.session.is_completed:
-            if not self.session.is_completed:
+            if not self.session.is_completed and self.timer_label:
                 try:
-                    self.timer_label.config(text="⚠️ QR code expired", fg="#FF4444")
+                    self.timer_label.config(text="⚠️ QR code expired — click Refresh Code", fg="#FF4444")
                 except Exception:
                     pass
-            self.root.after(1000, self._safe_destroy)
             return
 
         mins = remaining // 60
         secs = remaining % 60
-        try:
-            self.timer_label.config(text=f"Expires in {mins:02d}:{secs:02d}")
-            self.root.after(1000, self._update_countdown)
-        except Exception:
-            pass
+        if self.timer_label:
+            try:
+                self.timer_label.config(text=f"Expires in {mins:02d}:{secs:02d}", fg="#FFAA00")
+            except Exception:
+                pass
+
+        self.root.after(1000, self._update_countdown)
+
+    def refresh_session(self):
+        """Refreshes the pairing session with a new token."""
+        self.session.refresh()
+        if self.on_refresh_session:
+            self.on_refresh_session(self.session)
+        self._refresh_qr_display()
+        self._update_countdown()
+
+    def _refresh_qr_display(self):
+        if self.lbl_qr_pair and self.root and self.root.winfo_exists():
+            try:
+                new_img = self.session.generate_qr_image(box_size=6, border=2)
+                self.pair_photo_img = ImageTk.PhotoImage(new_img)
+                self.lbl_qr_pair.config(image=self.pair_photo_img)
+            except Exception as e:
+                logger.error(f"Error refreshing QR image: {e}")
+
+    def set_connected(self, device_name: str = "Android Phone"):
+        """Switches UI to connected state, removing pairing QR."""
+        self.is_connected = True
+        self.connected_device_name = device_name
+        self.session.is_completed = True
+        if self.connected_device_label and self.root and self.root.winfo_exists():
+            try:
+                self.connected_device_label.config(text=f"📱 {device_name}")
+                self._show_connected_tab()
+            except Exception as e:
+                logger.error(f"Error updating connected UI: {e}")
+
+    def set_disconnected(self):
+        """Switches UI to disconnected state."""
+        self.is_connected = False
+        if self.root and self.root.winfo_exists():
+            try:
+                self.btn_tab_connected.configure(text="⚪ Offline", fg="#7B8FA8")
+            except Exception:
+                pass
+
+    def set_sync_info(self, info: str):
+        self.last_sync_info = info
+        if self.last_sync_label and self.root and self.root.winfo_exists():
+            try:
+                self.last_sync_label.config(text=f"Sync Activity: {info}")
+            except Exception:
+                pass
+
+    def _on_disconnect_click(self):
+        if self.on_disconnect:
+            self.on_disconnect()
+        self.set_disconnected()
+        self._show_pair_tab()
+
+    def hide_to_tray(self):
+        """Hides the window to the Windows system tray."""
+        if self.root and self.root.winfo_exists():
+            try:
+                self.root.withdraw()
+            except Exception as e:
+                logger.debug(f"Error hiding window: {e}")
+
+    def unhide(self):
+        """Restores and focuses the window from the tray."""
+        if self.root and self.root.winfo_exists():
+            try:
+                self.root.deiconify()
+                self.root.attributes("-topmost", True)
+                self.root.after_idle(self.root.attributes, "-topmost", False)
+            except Exception as e:
+                logger.debug(f"Error unhiding window: {e}")
 
     def close(self):
-        """Thread-safe window close method."""
+        """Safely cleans up window on application shutdown."""
         self.session.is_cancelled = True
         if self.root and self.root.winfo_exists():
             try:
-                # Schedule destruction on Tk thread to avoid Tcl_Panic / 0x80000003
-                self.root.after(0, self._safe_destroy)
-            except Exception as e:
-                logger.debug(f"Error scheduling safe destroy: {e}")
-
-    def _safe_destroy(self):
-        """Executes strictly on Tkinter event loop thread."""
-        try:
-            if self.on_cancel:
-                self.on_cancel()
-        except Exception:
-            pass
-        if self.root and self.root.winfo_exists():
-            try:
-                self.root.quit()
                 self.root.destroy()
             except Exception as e:
-                logger.debug(f"Error in Tk destroy: {e}")
+                logger.debug(f"Error destroying window: {e}")
             self.root = None
+
+
+# Alias for backward compatibility with existing tests and imports
+PairingWindow = DesktopConnectionWindow

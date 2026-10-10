@@ -7,13 +7,23 @@ a = Analysis(
     pathex=['.'],
     binaries=[],
     datas=[
-        # Bundle the icon so tray.py can find it inside the .exe
+        # Bundle the icon so tray.py and windows can find it inside the .exe
         ('desktop/assets/icon.png', 'desktop/assets'),
         ('desktop/assets/icon.png', 'assets'),
-        # Bundle the debug APK so local Wi-Fi direct download (/download) always succeeds
-        ('android/app/build/outputs/apk/debug/app-debug.apk', '.'),
+        # Bundle the release APK so local Wi-Fi direct download (/download) always succeeds
+        ('UniversalClipboard-v1.1.0.apk', '.'),
+        ('android/app/build/outputs/apk/release/app-release.apk', '.'),
     ],
     hiddenimports=[
+        'desktop.version',
+        'desktop.pairing',
+        'desktop.tray',
+        'desktop.server',
+        'desktop.config',
+        'desktop.crypto',
+        'desktop.network_discovery',
+        'desktop.clipboard_manager',
+        'desktop.hotkey_manager',
         'pystray._win32',
         'pynput.keyboard._win32',
         'pynput.mouse._win32',
@@ -29,6 +39,8 @@ a = Analysis(
         'qrcode',
         'win32clipboard',
         'win32con',
+        'tkinter',
+        'tkinter.ttk',
     ],
     hookspath=[],
     hooksconfig={},

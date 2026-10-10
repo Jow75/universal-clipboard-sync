@@ -23,6 +23,7 @@ except ImportError:
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from desktop.version import APP_NAME, APP_VERSION
 from desktop.clipboard_manager import ClipboardManager
 from desktop.crypto import CryptoManager, key_from_hex
 from desktop.server import SecureWebSocketServer
@@ -30,7 +31,7 @@ from desktop.tray import TrayApp
 from desktop.hotkey_manager import HotkeyManager
 from desktop.config import get_or_create_config, save_config, regenerate_master_key
 from desktop.network_discovery import get_best_local_ip, DiscoveryBeacon
-from desktop.pairing import PairingSession, PairingWindow
+from desktop.pairing import PairingSession, DesktopConnectionWindow, PairingWindow
 from desktop.protocol import (
     build_clipboard_payload,
     parse_clipboard_payload,
@@ -55,36 +56,42 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def write_to_windows_clipboard(clip_type: str, data: str):
-    """Writes text or image data to the Windows clipboard."""
-    try:
-        if clip_type == 'text':
-            pyperclip.copy(data)
-            logger.info(f"Phone→Laptop: wrote text to clipboard ({len(data)} chars)")
+def write_to_windows_clipboard(clip_type: str, data: str) -> bool:
+    """Writes text or image data to the Windows clipboard with bounded retries for transient locks."""
+    for attempt in range(3):
+        try:
+            if clip_type == 'text':
+                pyperclip.copy(data)
+                logger.info(f"Phone→Laptop: wrote text to clipboard ({len(data)} chars)")
+                return True
 
-        elif clip_type == 'image' and IMAGE_SUPPORT:
-            img_bytes = base64.b64decode(data)
-            img = Image.open(io.BytesIO(img_bytes))
+            elif clip_type == 'image' and IMAGE_SUPPORT:
+                img_bytes = base64.b64decode(data)
+                img = Image.open(io.BytesIO(img_bytes))
 
-            # Use win32clipboard for raw DIB bitmap write on Windows
-            try:
-                import win32clipboard
-                import win32con
+                # Use win32clipboard for raw DIB bitmap write on Windows
+                try:
+                    import win32clipboard
+                    import win32con
 
-                output = io.BytesIO()
-                img.convert('RGB').save(output, 'BMP')
-                bmp_data = output.getvalue()[14:]  # strip 14-byte BITMAPFILEHEADER
+                    output = io.BytesIO()
+                    img.convert('RGB').save(output, 'BMP')
+                    bmp_data = output.getvalue()[14:]  # strip 14-byte BITMAPFILEHEADER
 
-                win32clipboard.OpenClipboard()
-                win32clipboard.EmptyClipboard()
-                win32clipboard.SetClipboardData(win32con.CF_DIB, bmp_data)
-                win32clipboard.CloseClipboard()
-                logger.info("Phone→Laptop: wrote image to Windows clipboard")
-            except Exception as w32_err:
-                logger.warning(f"Win32 clipboard write fallback: {w32_err}")
+                    win32clipboard.OpenClipboard()
+                    win32clipboard.EmptyClipboard()
+                    win32clipboard.SetClipboardData(win32con.CF_DIB, bmp_data)
+                    win32clipboard.CloseClipboard()
+                    logger.info("Phone→Laptop: wrote image to Windows clipboard")
+                    return True
+                except Exception as w32_err:
+                    logger.warning(f"Win32 clipboard write attempt {attempt+1} note: {w32_err}")
 
-    except Exception as e:
-        logger.error(f"Error writing to Windows clipboard: {e}")
+            time.sleep(0.05)
+        except Exception as e:
+            logger.warning(f"Error writing to Windows clipboard (attempt {attempt+1}/3): {e}")
+            time.sleep(0.05)
+    return False
 
 
 class AppState:
@@ -119,10 +126,14 @@ class AppState:
             return False
 
 
+server_loop_holder = [None]
+
+
 def run_server_loop(server: SecureWebSocketServer, app_state: AppState):
     """Runs aiohttp event loop in a dedicated background daemon thread."""
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
+    server_loop_holder[0] = loop
 
     async def server_task():
         await server.start()
@@ -143,7 +154,7 @@ def run_server_loop(server: SecureWebSocketServer, app_state: AppState):
 
 
 def main():
-    logger.info("Starting Universal Clipboard Sync...")
+    logger.info(f"Starting {APP_NAME} v{APP_VERSION}...")
 
     # 1. Load persistent configuration
     cfg = get_or_create_config()
@@ -163,7 +174,7 @@ def main():
     app_state.hotkey_mode = cfg.get("hotkey_mode", False)
 
     tray_app_ref = [None]
-    pairing_window_ref = [None]
+    connection_window_ref = [None]
 
     # 2. Callback when Android sends clipboard content to Windows
     def on_receive_from_phone(encrypted_payload: str):
@@ -189,8 +200,8 @@ def main():
                 enc_resp = crypto_manager.encrypt(resp_payload)
                 app_state.message_queue.put(enc_resp)
 
-                if pairing_window_ref[0]:
-                    pairing_window_ref[0].close()
+                if connection_window_ref[0]:
+                    connection_window_ref[0].post_event("client_connected", {"id": client_id, "name": client_name})
                 if tray_app_ref[0]:
                     tray_app_ref[0].notify(f"Phone paired successfully: {client_name}")
                 return
@@ -200,6 +211,10 @@ def main():
             # Record hash to suppress reflection loop
             app_state.record_received_hash(content_hash)
             write_to_windows_clipboard(clip_type, data)
+
+            time_str = time.strftime("%H:%M:%S")
+            if connection_window_ref[0]:
+                connection_window_ref[0].post_event("sync_info", f"Received {clip_type} at {time_str}")
 
             if tray_app_ref[0]:
                 preview = data[:30] + "..." if len(data) > 30 else data
@@ -212,23 +227,29 @@ def main():
     # 3. Client lifecycle callbacks
     def on_client_connected(client_id, client_name):
         logger.info(f"Client authenticated: {client_name} ({client_id})")
-        if pairing_window_ref[0]:
+        if connection_window_ref[0]:
             try:
-                pairing_window_ref[0].close()
+                connection_window_ref[0].post_event("client_connected", {"id": client_id, "name": client_name})
             except Exception as e:
-                logger.debug(f"Error closing pairing window on connect: {e}")
-            pairing_window_ref[0] = None
+                logger.debug(f"Error updating connection window on connect: {e}")
 
         if tray_app_ref[0]:
-            count = len(server.authenticated_clients)
-            tray_app_ref[0].update_connected_count(count)
+            active = server.get_active_client_info()
+            tray_app_ref[0].update_connected_count(len(active), client_name)
             tray_app_ref[0].notify(f"Phone connected: {client_name}")
 
     def on_client_disconnected(client_id):
         logger.info(f"Client disconnected: {client_id}")
+        if connection_window_ref[0]:
+            try:
+                connection_window_ref[0].post_event("client_disconnected", client_id)
+            except Exception as e:
+                logger.debug(f"Error updating connection window on disconnect: {e}")
+
         if tray_app_ref[0]:
-            count = len(server.authenticated_clients)
-            tray_app_ref[0].update_connected_count(count)
+            active = server.get_active_client_info()
+            name = active[0]["name"] if active else None
+            tray_app_ref[0].update_connected_count(len(active), name)
 
     # 4. Instantiate server and start network thread
     server = SecureWebSocketServer(
@@ -263,6 +284,10 @@ def main():
             payload = build_clipboard_payload(clip_type, clip_data, source_id=server_id)
             encrypted = crypto_manager.encrypt(payload)
             app_state.message_queue.put(encrypted)
+
+            time_str = time.strftime("%H:%M:%S")
+            if connection_window_ref[0]:
+                connection_window_ref[0].post_event("sync_info", f"Sent {clip_type} to phone at {time_str}")
         except Exception as e:
             logger.error(f"Error processing clipboard change: {e}")
 
@@ -289,8 +314,12 @@ def main():
     hotkey_manager = HotkeyManager(on_hotkey_pressed)
     hotkey_manager.start()
 
-    # 8. QR Pairing Trigger
-    def on_pair_click():
+    # 8. Status and Pairing Window Controller
+    def open_status_window():
+        if connection_window_ref[0] and connection_window_ref[0].root and connection_window_ref[0].root.winfo_exists():
+            connection_window_ref[0].unhide()
+            return
+
         current_ip = get_best_local_ip()
         session = PairingSession(
             ip=current_ip,
@@ -305,9 +334,32 @@ def main():
             "exp": session.expires_at
         })
 
+        def on_disconnect():
+            if server_loop_holder[0]:
+                asyncio.run_coroutine_threadsafe(server.disconnect_all_clients(), server_loop_holder[0])
+
+        def on_refresh(sess):
+            server.set_active_pairing_session({
+                "id": sess.session_id,
+                "token_bytes": sess.token_bytes,
+                "exp": sess.expires_at
+            })
+
         def run_gui():
-            win = PairingWindow(session, on_cancel=lambda: server.clear_active_pairing_session())
-            pairing_window_ref[0] = win
+            win = DesktopConnectionWindow(
+                session,
+                on_cancel=lambda: server.clear_active_pairing_session(),
+                on_disconnect=on_disconnect,
+                on_refresh_session=on_refresh
+            )
+            # Check if any client is already connected
+            active = server.get_active_client_info()
+            if active:
+                win.is_connected = True
+                win.connected_device_name = active[0]["name"]
+                win.connected_device_id = active[0]["id"]
+
+            connection_window_ref[0] = win
             win.show()
 
         gui_thread = threading.Thread(target=run_gui, daemon=True)
@@ -321,6 +373,8 @@ def main():
         master_key_bytes = key_from_hex(new_key)
         crypto_manager = CryptoManager(master_key_bytes)
         server.set_master_key(master_key_bytes)
+        if server_loop_holder[0]:
+            asyncio.run_coroutine_threadsafe(server.disconnect_all_clients(), server_loop_holder[0])
         logger.info("Regenerated master key. Existing phone pairings revoked.")
 
     # 10. Tray App Setup
@@ -339,12 +393,13 @@ def main():
         port=port,
         on_auto_sync_toggle=on_auto_sync_toggle,
         on_hotkey_toggle=on_hotkey_toggle,
-        on_pair_click=on_pair_click,
-        on_unpair_click=on_unpair_click
+        on_pair_click=open_status_window,
+        on_unpair_click=on_unpair_click,
+        on_open_status_window=open_status_window
     )
     tray_app_ref[0] = tray_app
 
-    logger.info(f"Universal Clipboard Desktop is ready in system tray.")
+    logger.info(f"{APP_NAME} v{APP_VERSION} ready in system tray.")
 
     try:
         tray_app.run()

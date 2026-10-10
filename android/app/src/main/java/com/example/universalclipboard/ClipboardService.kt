@@ -147,6 +147,12 @@ class ClipboardService : Service() {
         }
     }
 
+    fun isHashSuppressed(hash: String): Boolean {
+        return (networkClient?.isHashSuppressed(hash) == true) ||
+                (hash == clipboardHandler.lastCopiedFromPcHash) ||
+                (hash == lastObservedClipHash)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         instance = null

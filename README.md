@@ -2,89 +2,97 @@
 
 > **Private, fast, and secure cross-device clipboard synchronization between Windows and Android.**
 
-Universal Clipboard Sync bridges your Windows desktop and Android phone over your local Wi-Fi network. Copy text or screenshots on your PC and paste them instantly on your phone, or send copied text and images from Android back to your PC with a single tap.
+Universal Clipboard Sync bridges your Windows desktop and Android phone over your local Wi-Fi network. Copy text or screenshots on your PC and paste them instantly on your phone, or send copied text and images from Android back to your PC with zero friction.
+
+[![Release](https://img.shields.io/badge/Release-v1.1.0-blue.svg)](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest)
+[![Platform Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg)](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest)
+[![Platform Android](https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026--35)-3DDC84.svg)](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
 
-## ✨ Features
+## 📥 Downloads (v1.1.0)
 
-- **📱 Frictionless QR Code Pairing**: No more manually copying tokens across chat apps. Simply click **"Pair Phone"** in your Windows system tray, point your phone's camera at the screen, and pair in seconds.
+| Package | Format | Size | Description | Download Link |
+| :--- | :--- | :--- | :--- | :--- |
+| **Windows Setup** | `.exe` (Installer) | ~44 MB | Recommended for Windows 10 & 11. Includes Start Menu & Desktop shortcuts | [Download Setup](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Setup-1.1.0.exe) |
+| **Windows Portable** | `.exe` (Standalone) | ~47 MB | Single-file portable executable, runs without installation | [Download Portable](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Portable-1.1.0.exe) |
+| **Android App** | `.apk` (v2 Signed) | ~5.7 MB | For Android phones & tablets (Android 8.0 to Android 15) | [Download APK](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Android-1.1.0.apk) |
+
+### 📱 Scan to Download Android APK
+Scan this official download QR code with your phone camera to download the latest release:
+
+![Download Universal Clipboard Sync](docs/assets/download_qr.png)
+
+*Direct Link:* [https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest)
+
+> **Local Network Download**: When the Windows application is running, you can also download the Android APK directly over your home Wi-Fi at `http://<YOUR_PC_IP>:8765/download` without needing internet access!
+
+---
+
+## 🔒 Verification & Checksums
+
+Users can verify binary integrity using SHA-256 checksums:
+
+```text
+b2c1dee8c5cf7fc68d46ef1ecd5b2c9beb91af982342d19a40acddac9e10b840  UniversalClipboard-Setup-1.1.0.exe
+be603914ae5341d291ac7ae2198e9840cd84b319346f86ecd00bdc7e7de547ce  UniversalClipboard-Portable-1.1.0.exe
+758e660d16f6e52d912f95e31fa05e579660fb76e6b8cdecfd5979bbf21e7d3c  UniversalClipboard-Android-1.1.0.apk
+```
+
+---
+
+## ✨ Features in Version 1.1.0
+
+- **⚡ Seamless Bidirectional Clipboard Sharing**:
+  - **PC ➔ Phone**: Copy on Windows (`Ctrl + C`) and immediately paste in any phone app.
+  - **Phone ➔ PC (Zero-Tap)**: Optional Android Accessibility Service enables automatic copy sync without opening the app.
+  - **1-Tap Quick Action**: Persistent notification button `[ 📋 Send to PC ]` and Quick Settings Tile for instant transfers.
+- **🖥️ Smart Desktop Status Window**:
+  - Displays pairing QR code while waiting for connection.
+  - Seamlessly transitions to `🟢 CONNECTED TO ANDROID` upon pairing, showing connected device name and sync timestamps.
+  - Dedicated "Download APK" tab with direct Wi-Fi download link and QR code.
+- **🔄 Robust Reconnection Engine**:
+  - Exponential backoff with jitter (2s–30s).
+  - Monotonic connection epochs prevent stale socket callbacks from corrupting connection state.
+  - Automatic UDP network discovery (`port 8766`) recovers seamlessly when router DHCP assigns a new IP address.
 - **🔐 Hardware & OS-Backed Security**:
-  - **AES-256-GCM Authenticated Encryption**: All clipboard text and images are encrypted locally with a fresh IV and GMAC authentication tag per message.
-  - **Mutual Authentication Handshake**: Clients must pass an HMAC-SHA256 challenge before receiving any clipboard frames.
-  - **Windows DPAPI Storage**: Master keys are encrypted with Windows Data Protection API (`win32crypt`) in `%APPDATA%\UniversalClipboard\config.json`.
-  - **Android Keystore**: Credentials are encrypted inside the hardware-backed Android Keystore.
-- **🔄 Persistent Across Restarts**: Restarting Windows or Android does **not** invalidate your pairing. Reconnection happens automatically with exponential backoff and jitter.
-- **📡 Smart Network Discovery**:
-  - Automatically excludes virtual network adapters (WSL, Hyper-V, VirtualBox, Docker).
-  - Background UDP discovery beacon (`port 8766`) automatically recovers when your PC's local DHCP IP changes.
-- **🖼️ Full Image & Text Two-Way Sync**:
-  - Windows to Android: Seamless background synchronization for both text and screenshots (`Win + Shift + S`).
-  - Android to Windows: 1-tap sync via a persistent notification action (`[ 📋 Send to PC ]`) or an Android **Quick Settings Tile** accessible from any app.
-  - Android `FileProvider` integration guarantees images can be pasted directly into WhatsApp, Slack, Gmail, and browsers without permission denials.
-- **⚡ Echo-Loop Prevention**: Canonical cross-platform SHA-256 deduplication normalizes line endings (`CRLF` to `LF`) and suppresses echoing.
+  - **AES-256-GCM Encryption**: All clipboard text and images encrypted with unique 96-bit IVs and 128-bit authentication tags.
+  - **Windows DPAPI Storage**: Master keys protected by Windows DPAPI in `%APPDATA%\UniversalClipboard\config.json`.
+  - **Android Keystore**: Master keys encrypted with hardware-backed Android Keystore.
+  - **Replay Protection**: Mutual HMAC-SHA256 challenge-response handshake with 32-byte nonces.
+  - **Echo-Loop Suppression**: Normalized line-ending SHA-256 hashing prevents infinite loop ping-pongs.
 
 ---
 
 ## 🚀 Quick Start Guide
 
-### 1. Windows Installation
-1. Download `UniversalClipboard.exe` from the latest **[GitHub Releases](https://github.com/universal-clipboard/universal-clipboard-sync/releases)**.
-2. Run `UniversalClipboard.exe`. It launches silently into your **System Tray** (near the taskbar clock).
-3. If prompted by Windows Defender Firewall, allow access on Private Networks.
+### 1. Install on Windows
+1. Download `UniversalClipboard-Setup-1.1.0.exe` and run the installer.
+2. The application will launch into your **Windows System Tray** (near the clock).
+3. Right-click the tray icon and select **🖥️ Open Status Window** (or double-click the tray icon).
 
-### 2. Android Installation
-1. Download `app-debug.apk` from the latest **GitHub Releases** on your Android phone.
-2. Open the APK to install (enable "Install unknown apps" for your browser if prompted).
-3. Open **Universal Clipboard** and grant **Camera** and **Notification** permissions when requested.
+### 2. Install on Android
+1. Download `UniversalClipboard-Android-1.1.0.apk` from your phone browser or via local Wi-Fi at `http://<PC_IP>:8765/download`.
+2. Tap the APK to install (allow "Install unknown apps" if prompted).
+3. Open the app and grant Camera and Notification permissions.
 
-### 3. Pairing Your Devices
-1. On Windows, right-click the **Universal Clipboard** icon in your system tray and select **"📱 Pair Phone (QR Code)"**.
-2. A pairing window with a QR code and a 3-minute timer will appear.
-3. On your phone, tap **"📷 Scan QR Code to Pair"**.
-4. Scan the QR code displayed on your PC screen.
-5. Done! Both devices are now securely paired and authenticated.
-
----
-
-## 📋 How Synchronization Works
-
-### Windows ➔ Android
-Simply copy any text (`Ctrl + C`) or take a screenshot (`Win + Shift + S`) on Windows. The content is automatically encrypted, sent across the local network, and placed onto your Android clipboard.
-
-### Android ➔ Windows
-*Note on Android 10+ Privacy Protections*: Starting in Android 10, the Android OS intentionally blocks background applications from reading the system clipboard. Universal Clipboard Sync provides two frictionless 1-tap methods to send your clipboard to your PC without having to open the app:
-
-1. **Notification Action**: Whenever text or an image is copied, pull down your notification shade and tap **`[ 📋 Send to PC ]`**.
-2. **Quick Settings Tile**: Add the **"Sync to PC"** tile to your phone's Quick Settings panel. Swipe down from the top of your screen from inside *any* app and tap the tile to push your clipboard to your PC instantly.
+### 3. Pair in Seconds
+1. In the Windows status window, view the **Pair Device (QR Code)** tab.
+2. On your phone, tap **Scan QR Code** and point your camera at the PC screen.
+3. The Windows screen transitions immediately to **🟢 CONNECTED TO ANDROID**.
+4. Both devices are permanently paired! You never need to scan again, even after rebooting.
 
 ---
 
-## 🛠️ Architecture & Specifications
+## 📖 Detailed Documentation
 
-```
-+-------------------------------------------------------------------+
-|                        Local Wi-Fi Network                        |
-|                                                                   |
-|   +--------------------+                 +--------------------+   |
-|   |   Windows Desktop  |                 |   Android Client   |   |
-|   |  - WS Server: 8765 | <== WS (AES) == |  - WS Client       |   |
-|   |  - UDP Bcn:   8766 | === UDP Bcn ==> |  - UDP Listener    |   |
-|   +--------------------+                 +--------------------+   |
-+-------------------------------------------------------------------+
-```
-
-- **Protocol Version**: `v=2`
-- **Encryption**: AES-256-GCM (96-bit IV, 128-bit Tag)
-- **Challenge-Response**: HMAC-SHA256 (32-byte nonce)
-- **Message Framing**: JSON envelope with Base64 ciphertext
-- **Max Payload Size**: 25 MB
-
-For in-depth architectural and security documentation, see:
-- [`docs/ENGINEERING_BASELINE.md`](file:///c:/Users/gmura/Music/Copy%20and%20Paste/docs/ENGINEERING_BASELINE.md)
-- [`docs/SECURITY.md`](file:///c:/Users/gmura/Music/Copy%20and%20Paste/docs/SECURITY.md)
-- [`docs/NETWORK_ARCHITECTURE.md`](file:///c:/Users/gmura/Music/Copy%20and%20Paste/docs/NETWORK_ARCHITECTURE.md)
-- [`docs/TEST_REPORT.md`](file:///c:/Users/gmura/Music/Copy%20and%20Paste/docs/TEST_REPORT.md)
+- [Release Installation Guide](file:///docs/RELEASE_INSTALLATION_GUIDE.md) — Nontechnical step-by-step setup guide.
+- [End-to-End Validation Guide](file:///docs/END_TO_END_TEST_GUIDE.md) — Test procedures, verification matrix, and unique test strings.
+- [Known Limitations & Architecture Boundaries](file:///docs/KNOWN_LIMITATIONS.md) — Operating system restrictions and scope.
+- [Release Verification Report](file:///docs/RELEASE_VERIFICATION_REPORT.md) — Exact file sizes, checksums, and signature verification.
+- [Security Architecture & Threat Model](file:///docs/SECURITY.md) — Cryptographic protocol and security specifications.
+- [Privacy Policy & Data Handling](file:///docs/PRIVACY.md) — Zero-telemetry, local LAN only, zero persistent clipboard history.
 
 ---
 
@@ -93,36 +101,32 @@ For in-depth architectural and security documentation, see:
 ### Running Python Tests
 ```bash
 python -m pytest -v
+# 18 passed in 6.42s
 ```
 
-### Building the Windows Executable
-Requires Python 3.10+ and PyInstaller:
-```bash
-build_exe.bat
-# Output located at: dist\UniversalClipboard.exe
-```
-
-### Building the Android APK
-Requires JDK 17+ and the Android SDK:
+### Running Android Unit Tests
 ```bash
 cd android
-.\gradlew.bat assembleDebug
-# Output located at: android\app\build\outputs\apk\debug\app-debug.apk
+.\gradlew.bat testDebugUnitTest
+# 7 passed in 13s
 ```
 
----
+### Building Windows Binaries
+```bash
+# Standalone PyInstaller Executable
+python -m PyInstaller build_exe.spec --clean --noconfirm
 
-## ❓ Troubleshooting & FAQ
+# Inno Setup Installer
+& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer\UniversalClipboard.iss"
+```
 
-**Q: My phone cannot connect to my PC.**
-- Ensure both devices are connected to the same Wi-Fi router.
-- Check Windows Defender Firewall: Ensure `UniversalClipboard.exe` is allowed to receive inbound connections on port 8765.
-- If your Wi-Fi has "Client Isolation" or "Guest Mode" enabled, devices cannot communicate directly with each other. Disable client isolation in your router settings.
-
-**Q: My PC IP address changed after restarting the router.**
-- The desktop app broadcasts a lightweight UDP beacon on port `8766`. The Android app listens for this beacon and will automatically reconnect to the new IP without requiring re-pairing.
+### Building Android Release APK
+```bash
+cd android
+.\gradlew.bat assembleRelease
+```
 
 ---
 
 ## 📄 License
-Universal Clipboard Sync is distributed under the MIT License.
+Universal Clipboard Sync is open-source software licensed under the **MIT License**.

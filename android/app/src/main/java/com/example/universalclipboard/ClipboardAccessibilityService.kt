@@ -3,6 +3,8 @@ package com.example.universalclipboard
 import android.accessibilityservice.AccessibilityService
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 
@@ -31,9 +33,12 @@ class ClipboardAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        // Window state or text selection change can also trigger clipboard check
-        if (event?.eventType == AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED ||
-            event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+        // Any interaction that could represent copying or changing selection triggers clipboard check
+        val evtType = event?.eventType
+        if (evtType == AccessibilityEvent.TYPE_VIEW_TEXT_SELECTION_CHANGED ||
+            evtType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
+            evtType == AccessibilityEvent.TYPE_VIEW_CLICKED ||
+            evtType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
             handleClipboardChanged()
         }
     }
@@ -50,13 +55,31 @@ class ClipboardAccessibilityService : AccessibilityService() {
                 val text = item.coerceToText(this)?.toString()
                 if (!text.isNullOrBlank()) {
                     val hash = Protocol.computeContentHash("text", text)
+
+                    // Suppress duplicate or echo-loop reflections
+                    val service = ClipboardService.instance
+                    if (service != null && service.isHashSuppressed(hash)) {
+                        return
+                    }
+
                     if (hash != lastObservedHash) {
                         lastObservedHash = hash
-                        // Forward to active network client in ClipboardService
-                        val client = ClipboardService.instance?.networkClient
-                        if (client != null) {
-                            client.sendText(text)
-                            Log.i("ClipboardAccessibility", "Seamlessly sent ${text.length} chars to PC")
+
+                        if (service?.networkClient != null && service.networkClient?.isConnectedAndAuthenticated() == true) {
+                            service.networkClient?.sendText(text)
+                            Log.i("ClipboardAccessibility", "Seamlessly sent ${text.length} chars to PC via active client")
+                        } else {
+                            // Forward via Intent to ClipboardService
+                            val intent = Intent(this, ClipboardService::class.java).apply {
+                                action = ClipboardService.ACTION_SEND_TEXT
+                                putExtra(ClipboardService.EXTRA_TEXT, text)
+                            }
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                startForegroundService(intent)
+                            } else {
+                                startService(intent)
+                            }
+                            Log.i("ClipboardAccessibility", "Forwarded ${text.length} chars to ClipboardService intent")
                         }
                     }
                 }

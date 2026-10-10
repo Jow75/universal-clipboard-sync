@@ -43,7 +43,8 @@ def _load_icon_image() -> Image.Image:
 class TrayApp:
     def __init__(self, ip_address: str, port: int,
                  on_auto_sync_toggle, on_hotkey_toggle,
-                 on_pair_click=None, on_unpair_click=None):
+                 on_pair_click=None, on_unpair_click=None,
+                 on_open_status_window=None):
         self.ip_address = ip_address
         self.port = port
         self.icon = None
@@ -52,16 +53,28 @@ class TrayApp:
         self.auto_sync = True
         self.hotkey_mode = False
         self.connected_count = 0
+        self.connected_device_name = "Android Phone"
 
         self.on_auto_sync_toggle = on_auto_sync_toggle
         self.on_hotkey_toggle = on_hotkey_toggle
         self.on_pair_click = on_pair_click
         self.on_unpair_click = on_unpair_click
+        self.on_open_status_window = on_open_status_window
 
-    def update_connected_count(self, count: int):
+    def update_connected_count(self, count: int, device_name: str = None):
         self.connected_count = count
+        if device_name:
+            self.connected_device_name = device_name
+        elif count == 0:
+            self.connected_device_name = "Android Phone"
         if self.icon:
             self.icon.update_menu()
+
+    def trigger_open_status(self, icon=None, item=None):
+        if self.on_open_status_window:
+            self.on_open_status_window()
+        elif self.on_pair_click:
+            self.on_pair_click()
 
     def toggle_auto_sync(self, icon, item):
         self.auto_sync = not self.auto_sync
@@ -100,17 +113,18 @@ class TrayApp:
 
         def status_text(item):
             if self.connected_count > 0:
-                return f"Status: Connected ({self.connected_count} device)"
-            return "Status: Waiting for phone"
+                return f"🟢 Connected: {self.connected_device_name}"
+            return "⚪ Waiting for phone"
 
         menu = pystray.Menu(
-            pystray.MenuItem("Universal Clipboard", lambda: None, enabled=False),
+            pystray.MenuItem("Universal Clipboard Sync", lambda: None, enabled=False),
             pystray.MenuItem(status_text, lambda: None, enabled=False),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("🖥️ Open Status Window", self.trigger_open_status, default=True),
+            pystray.MenuItem("📱 Pair Phone (QR Code)", self.trigger_pair_qr),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem(f"IP: {self.ip_address}", lambda: None, enabled=False),
             pystray.MenuItem(f"Port: {self.port}", lambda: None, enabled=False),
-            pystray.Menu.SEPARATOR,
-            pystray.MenuItem("📱 Pair Phone (QR Code)", self.trigger_pair_qr, default=True),
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Auto Sync", self.toggle_auto_sync, checked=lambda item: self.auto_sync),
             pystray.MenuItem("Hotkey Sync (Ctrl+Shift+C)", self.toggle_hotkey_mode, checked=lambda item: self.hotkey_mode),

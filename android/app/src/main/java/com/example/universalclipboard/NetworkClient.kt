@@ -12,6 +12,16 @@ import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
+enum class ConnectionState {
+    DISCONNECTED,
+    DISCOVERING,
+    CONNECTING,
+    AUTHENTICATING,
+    CONNECTED,
+    RECONNECTING,
+    ERROR
+}
+
 class NetworkClient(
     private val context: Context,
     private var ip: String,
@@ -23,7 +33,8 @@ class NetworkClient(
     private val onImage: (String) -> Unit,
     private val onStatusChange: (String) -> Unit = {},
     private val onIpDiscovered: ((String) -> Unit)? = null,
-    private val onTokenProvisioned: ((String) -> Unit)? = null
+    private val onTokenProvisioned: ((String) -> Unit)? = null,
+    private val onStateChange: ((ConnectionState) -> Unit)? = null
 ) {
     private val client = OkHttpClient.Builder()
         .readTimeout(0, TimeUnit.MILLISECONDS)
@@ -33,10 +44,18 @@ class NetworkClient(
     private var webSocket: WebSocket? = null
     private var isClosed = false
     private var isAuthenticated = false
+    private var state: ConnectionState = ConnectionState.DISCONNECTED
     private val handler = Handler(Looper.getMainLooper())
+
+    // Monotonic generation number to prevent stale socket callbacks
+    private var currentEpoch: Long = 0L
 
     private var retryAttempt = 0
     private val suppressedHashes = LinkedHashMap<String, Long>()
+
+    // Bounded buffer for pending text if copied while reconnecting (TTL 60s)
+    private var pendingText: String? = null
+    private var pendingTextTime: Long = 0L
 
     companion object {
         private const val TAG = "NetworkClient"
@@ -44,27 +63,55 @@ class NetworkClient(
         private const val UDP_DISCOVERY_MAGIC = "UNICLIP_DISCOVER"
     }
 
-    fun isConnectedAndAuthenticated(): Boolean = webSocket != null && isAuthenticated
+    fun isConnectedAndAuthenticated(): Boolean = webSocket != null && isAuthenticated && state == ConnectionState.CONNECTED
 
+    fun getState(): ConnectionState = state
+
+    private fun updateState(newState: ConnectionState) {
+        state = newState
+        onStateChange?.invoke(newState)
+    }
+
+    @Synchronized
     fun connect() {
         if (isClosed) return
+
+        // Gracefully cancel any prior socket
+        try {
+            webSocket?.cancel()
+        } catch (_: Exception) {}
+        webSocket = null
+
+        val epoch = ++currentEpoch
         val url = "ws://$ip:$port/ws"
         val request = Request.Builder().url(url).build()
-        Log.d(TAG, "Connecting to $url ...")
+
+        Log.d(TAG, "[epoch=$epoch] Connecting to $url ...")
+        updateState(ConnectionState.CONNECTING)
         onStatusChange(MainActivity.STATUS_CONNECTING)
         isAuthenticated = false
 
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
-                Log.d(TAG, "WebSocket connected, awaiting auth challenge from $ip:$port")
-                retryAttempt = 0
+                if (epoch != currentEpoch || isClosed) {
+                    Log.d(TAG, "[epoch=$epoch] Stale onOpen ignored (current=$currentEpoch)")
+                    webSocket.cancel()
+                    return
+                }
+                Log.d(TAG, "[epoch=$epoch] WebSocket connected, awaiting auth challenge from $ip:$port")
+                updateState(ConnectionState.AUTHENTICATING)
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
+                if (epoch != currentEpoch || isClosed) {
+                    Log.d(TAG, "[epoch=$epoch] Stale onMessage ignored (current=$currentEpoch)")
+                    return
+                }
+
                 try {
-                    // 1. Check if unencrypted handshake frame
+                    // 1. Handshake frames
                     if (!isAuthenticated) {
-                        handleHandshakeMessage(webSocket, text)
+                        handleHandshakeMessage(webSocket, text, epoch)
                         return
                     }
 
@@ -86,41 +133,56 @@ class NetworkClient(
                         else -> Log.w(TAG, "Unknown payload type: $type")
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error processing incoming frame: ${e.message}")
+                    Log.e(TAG, "[epoch=$epoch] Error processing incoming frame: ${e.message}")
                 }
             }
 
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                if (epoch != currentEpoch || isClosed) return
                 webSocket.close(1000, null)
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                Log.e(TAG, "Connection failure to $ip: ${t.message}")
+                if (epoch != currentEpoch || isClosed) {
+                    Log.d(TAG, "[epoch=$epoch] Stale onFailure ignored (current=$currentEpoch)")
+                    return
+                }
+                Log.e(TAG, "[epoch=$epoch] Connection failure to $ip: ${t.message}")
                 isAuthenticated = false
+                updateState(ConnectionState.RECONNECTING)
                 onStatusChange(MainActivity.STATUS_DISCONNECTED)
-                triggerUdpDiscoveryAndReconnect()
+                triggerUdpDiscoveryAndReconnect(epoch)
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                Log.d(TAG, "Closed: code=$code, reason=$reason")
+                if (epoch != currentEpoch || isClosed) {
+                    Log.d(TAG, "[epoch=$epoch] Stale onClosed ignored (current=$currentEpoch)")
+                    return
+                }
+                Log.d(TAG, "[epoch=$epoch] Closed: code=$code, reason=$reason")
                 isAuthenticated = false
-                onStatusChange(MainActivity.STATUS_DISCONNECTED)
+
                 if (code == 4001) {
-                    Log.w(TAG, "Server rejected authentication credentials.")
+                    Log.w(TAG, "[epoch=$epoch] Server rejected authentication credentials.")
+                    updateState(ConnectionState.ERROR)
                     onStatusChange("Pairing Invalid / Re-pair Required")
                     return
                 }
+
+                updateState(ConnectionState.RECONNECTING)
+                onStatusChange(MainActivity.STATUS_DISCONNECTED)
                 if (!isClosed) {
-                    triggerUdpDiscoveryAndReconnect()
+                    triggerUdpDiscoveryAndReconnect(epoch)
                 }
             }
         })
     }
 
-    private fun handleHandshakeMessage(ws: WebSocket, rawJson: String) {
+    private fun handleHandshakeMessage(ws: WebSocket, rawJson: String, epoch: Long) {
         try {
             val json = JSONObject(rawJson)
             val type = json.optString("type")
+
             if (type == Protocol.TYPE_AUTH_CHALLENGE) {
                 val nonce = json.getString("nonce")
                 val authTag = Protocol.computeAuthTag(nonce, token)
@@ -135,7 +197,8 @@ class NetworkClient(
                 }.toString()
 
                 ws.send(resp)
-                Log.d(TAG, "Sent auth response challenge response")
+                Log.d(TAG, "[epoch=$epoch] Sent auth response challenge")
+
             } else if (type == Protocol.TYPE_AUTH_OK) {
                 val masterKeyPayload = json.optString("master_key_payload")
                 if (masterKeyPayload.isNotBlank()) {
@@ -143,28 +206,48 @@ class NetworkClient(
                         val decryptedStr = CryptoManager.decrypt(masterKeyPayload, token)
                         val keyJson = JSONObject(decryptedStr)
                         val realKey = keyJson.getString("data")
-                        Log.i(TAG, "Successfully provisioned permanent master key via pairing handshake")
+                        Log.i(TAG, "[epoch=$epoch] Successfully provisioned permanent master key via pairing handshake")
                         token = realKey
                         onTokenProvisioned?.invoke(realKey)
                     } catch (e: Exception) {
-                        Log.e(TAG, "Failed to decrypt provisioned master key: ${e.message}")
+                        Log.e(TAG, "[epoch=$epoch] Failed to decrypt provisioned master key: ${e.message}")
                     }
                 }
                 isAuthenticated = true
+                retryAttempt = 0  // Backoff reset strictly on successful auth
+                updateState(ConnectionState.CONNECTED)
                 onStatusChange(MainActivity.STATUS_CONNECTED)
-                Log.i(TAG, "Successfully authenticated with desktop!")
+                Log.i(TAG, "[epoch=$epoch] Successfully authenticated with desktop!")
+
+                // Deliver pending message if queued during reconnection
+                val pending = pendingText
+                if (pending != null && (System.currentTimeMillis() - pendingTextTime) < 60_000) {
+                    pendingText = null
+                    sendText(pending)
+                }
+
             } else if (type == Protocol.TYPE_AUTH_FAIL) {
-                Log.w(TAG, "Server auth failed: ${json.optString("reason")}")
+                Log.w(TAG, "[epoch=$epoch] Server auth failed: ${json.optString("reason")}")
+                updateState(ConnectionState.ERROR)
                 onStatusChange("Pairing Invalid / Re-pair Required")
                 ws.close(4001, "Auth Failed")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Handshake parse error: ${e.message}")
+            Log.e(TAG, "[epoch=$epoch] Handshake parse error: ${e.message}")
         }
     }
 
     fun sendText(text: String) {
-        if (!isAuthenticated || text.isBlank()) return
+        if (text.isBlank()) return
+
+        if (!isAuthenticated || webSocket == null || state != ConnectionState.CONNECTED) {
+            // Buffer bounded text while reconnecting
+            pendingText = text
+            pendingTextTime = System.currentTimeMillis()
+            Log.d(TAG, "Buffered text to send upon connection (${text.length} chars)")
+            return
+        }
+
         try {
             val hash = Protocol.computeContentHash("text", text)
             if (isHashSuppressed(hash)) return
@@ -180,7 +263,7 @@ class NetworkClient(
     }
 
     fun sendImage(base64: String) {
-        if (!isAuthenticated || base64.isBlank()) return
+        if (!isAuthenticated || base64.isBlank() || state != ConnectionState.CONNECTED) return
         try {
             val hash = Protocol.computeContentHash("image", base64)
             if (isHashSuppressed(hash)) return
@@ -207,20 +290,23 @@ class NetworkClient(
         }
     }
 
-    private fun isHashSuppressed(hash: String): Boolean {
+    fun isHashSuppressed(hash: String): Boolean {
         val time = suppressedHashes[hash] ?: return false
         return (System.currentTimeMillis() - time) < 60_000
     }
 
-    private fun triggerUdpDiscoveryAndReconnect() {
-        if (isClosed) return
+    private fun triggerUdpDiscoveryAndReconnect(epoch: Long) {
+        if (isClosed || epoch != currentEpoch) return
         retryAttempt++
-        // Calculate backoff: 2s, 4s, 8s, up to 25s + jitter
-        val baseDelay = Math.min(2000L * (1 shl Math.min(retryAttempt, 4)), 25_000L)
+
+        // Exponential backoff: 2s, 4s, 8s, up to 30s + random jitter
+        val baseDelay = Math.min(2000L * (1 shl Math.min(retryAttempt, 4)), 30_000L)
         val jitter = Random.nextLong(0, 1000)
         val delay = baseDelay + jitter
 
-        // In parallel, attempt UDP discovery to see if PC changed IP
+        updateState(ConnectionState.DISCOVERING)
+
+        // Asynchronous UDP discovery to track dynamic IP changes on desktop
         Thread {
             try {
                 val socket = DatagramSocket().apply {
@@ -257,7 +343,7 @@ class NetworkClient(
         }.start()
 
         handler.postDelayed({
-            if (!isClosed) {
+            if (!isClosed && epoch == currentEpoch) {
                 connect()
             }
         }, delay)
@@ -266,8 +352,11 @@ class NetworkClient(
     fun close() {
         isClosed = true
         isAuthenticated = false
+        updateState(ConnectionState.DISCONNECTED)
         handler.removeCallbacksAndMessages(null)
-        webSocket?.close(1000, "App closed")
+        try {
+            webSocket?.close(1000, "App closed")
+        } catch (_: Exception) {}
         webSocket = null
     }
 }

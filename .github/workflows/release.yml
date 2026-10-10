@@ -1,0 +1,126 @@
+name: Release - Build and Publish Deliverables
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Windows Deliverables (Installer & Portable)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r desktop/requirements.txt
+          pip install pytest pytest-asyncio pyinstaller pillow qrcode opencv-python
+
+      - name: Run Python Test Suite
+        run: |
+          python -m pytest -v
+
+      - name: Build Standalone Executable
+        run: |
+          python -m PyInstaller build_exe.spec --clean --noconfirm
+          Copy-Item -Path "dist\UniversalClipboard.exe" -Destination "dist\UniversalClipboard-Portable-1.1.0.exe"
+
+      - name: Compile Inno Setup Installer
+        run: |
+          # Install Inno Setup via choco if not present
+          choco install innosetup --no-progress -y
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer\UniversalClipboard.iss"
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binaries
+          path: |
+            dist/UniversalClipboard-Setup-1.1.0.exe
+            dist/UniversalClipboard-Portable-1.1.0.exe
+
+  build-android:
+    name: Build Android Release APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x android/gradlew
+
+      - name: Run Android Unit Tests
+        working-directory: android
+        run: ./gradlew testDebugUnitTest
+
+      - name: Build Android Release APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+
+      - name: Rename APK Artifact
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/release/app-release.apk dist/UniversalClipboard-Android-1.1.0.apk
+
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-binaries
+          path: dist/UniversalClipboard-Android-1.1.0.apk
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build-windows, build-android]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-binaries
+          path: dist
+
+      - name: Download Android Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-binaries
+          path: dist
+
+      - name: Generate Checksums
+        working-directory: dist
+        run: |
+          sha256sum UniversalClipboard-Setup-1.1.0.exe UniversalClipboard-Portable-1.1.0.exe UniversalClipboard-Android-1.1.0.apk > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/UniversalClipboard-Setup-1.1.0.exe
+            dist/UniversalClipboard-Portable-1.1.0.exe
+            dist/UniversalClipboard-Android-1.1.0.apk
+            dist/SHA256SUMS.txt
+            docs/assets/download_qr.png
+          name: Universal Clipboard Sync v1.1.0
+          draft: false
+          prerelease: false
+          generate_release_notes: true
