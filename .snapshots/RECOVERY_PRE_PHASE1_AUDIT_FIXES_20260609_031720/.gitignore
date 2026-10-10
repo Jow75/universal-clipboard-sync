@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.idea/
+.gradle/
+build/
+local.properties
+*.iml
+.DS_Store
+venv/
+.env

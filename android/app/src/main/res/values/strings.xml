@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Universal Clipboard</string>
+    <string name="accessibility_desc">Enables seamless background clipboard synchronization between your phone and your PC without needing to open the app.</string>
+</resources>

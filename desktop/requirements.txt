@@ -1,0 +1,8 @@
+pyperclip
+pystray
+aiohttp
+cryptography
+Pillow
+pynput
+pywin32
+qrcode

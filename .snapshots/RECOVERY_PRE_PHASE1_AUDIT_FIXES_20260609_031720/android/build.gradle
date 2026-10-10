@@ -1,0 +1,8 @@
+// Top-level build file — modern plugins {} DSL (AGP 9.x)
+plugins {
+    id 'com.android.application' version '9.0.1' apply false
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

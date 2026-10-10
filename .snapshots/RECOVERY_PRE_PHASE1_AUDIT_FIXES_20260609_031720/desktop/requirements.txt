@@ -1,0 +1,6 @@
+pyperclip
+pystray
+aiohttp
+cryptography
+Pillow
+pynput
