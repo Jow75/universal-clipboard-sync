@@ -1,0 +1,41 @@
+# Universal Clipboard Sync — Netlify Configuration
+
+[build]
+  publish = "website"
+
+# Security & Performance Headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(self), geolocation=(), microphone=()"
+    Cache-Control = "public, max-age=3600"
+
+# Static Asset Caching
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Short Download Vanity Redirects
+[[redirects]]
+  from = "/download/windows"
+  to = "https://github.com/Jow75/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Setup-1.1.0.exe"
+  status = 302
+
+[[redirects]]
+  from = "/download/portable"
+  to = "https://github.com/Jow75/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Portable-1.1.0.exe"
+  status = 302
+
+[[redirects]]
+  from = "/download/android"
+  to = "https://github.com/Jow75/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Android-1.1.0.apk"
+  status = 302
+
+[[redirects]]
+  from = "/download"
+  to = "https://github.com/Jow75/universal-clipboard-sync/releases/latest"
+  status = 302

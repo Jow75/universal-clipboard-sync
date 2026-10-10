@@ -17,3 +17,4 @@ venv/
 .env
 *.apk
 *.exe
+.vscode/

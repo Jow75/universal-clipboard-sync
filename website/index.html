@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universal Clipboard Sync — Seamless Cross-Device Clipboard for Windows & Android</title>
+  <meta name="description" content="Universal Clipboard Sync bridges your Windows PC and multiple Android phones over local Wi-Fi. Copy on one device, paste on another instantly. Free, private, and open source.">
+  <meta name="keywords" content="universal clipboard, clipboard sync, android windows clipboard, copy paste phone to pc, multi-device clipboard, local clipboard synchronization">
+  <meta name="author" content="BAZIQHUE">
+
+  <!-- Open Graph / Social Metadata -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Universal Clipboard Sync — Your Clipboard. Every Device. Less Friction.">
+  <meta property="og:description" content="Copy text and media between Windows and multiple Android phones instantly over local Wi-Fi. Free, secure, and open-source.">
+  <meta property="og:url" content="https://github.com/Jow75/universal-clipboard-sync">
+  <meta property="og:image" content="assets/download_qr.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png">
+
+  <!-- Typography: Inter & Outfit from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ========================================================================
+       Header & Navigation
+       ======================================================================== -->
+  <header class="header">
+    <div class="container nav-container">
+      <a href="#" class="brand" aria-label="Universal Clipboard Sync Home">
+        <img src="assets/icon.png" alt="Universal Clipboard Icon" class="brand-icon">
+        <span>Universal Clipboard</span>
+        <span class="brand-tag" data-config="version">v1.1.0</span>
+      </a>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="#features" class="nav-link">Features</a></li>
+          <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
+          <li><a href="#multi-device" class="nav-link">Multi-Device</a></li>
+          <li><a href="#restricted-setting" class="nav-link">Android Setup</a></li>
+          <li><a href="#downloads" class="nav-link">Downloads</a></li>
+          <li><a href="#privacy" class="nav-link">Privacy</a></li>
+          <li><a href="#faq" class="nav-link">FAQ</a></li>
+          <li><a href="#support" class="nav-link">Support</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <button id="themeToggle" class="theme-toggle-btn" aria-label="Toggle color theme" title="Toggle color theme">
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+
+        <a href="#downloads" class="btn-nav-download">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Download</span>
+        </a>
+
+        <button class="mobile-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ========================================================================
+         Hero Section
+         ======================================================================== -->
+    <section class="hero" id="hero">
+      <div class="hero-glow"></div>
+      <div class="container hero-content">
+        <div class="hero-badge">
+          <span>⚡ Universal Clipboard Sync v1.1.0 Released</span>
+        </div>
+
+        <h1 class="hero-title">
+          Your clipboard. Every device.<br>
+          <span>Less friction.</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Copy text on your phone and paste it directly into your computer document. Copy a link on your laptop and paste it on your phone. Synchronize multiple Android devices seamlessly over your private Wi-Fi network without accounts, subscriptions, or cloud middlemen.
+        </p>
+
+        <div class="hero-actions">
+          <a href="#downloads" class="btn btn-primary" id="heroDownloadWin">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.401H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.901-1.801"/>
+            </svg>
+            <span>Download for Windows</span>
+          </a>
+
+          <a href="#downloads" class="btn btn-secondary" id="heroDownloadAndroid">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-1.0003s.4482-1.0003.9993-1.0003c.551 0 .9992.4486.9992 1.0003s-.4482 1.0003-.9992 1.0003m-11.046 0c-.5511 0-.9993-.4486-.9993-1.0003s.4482-1.0003.9993-1.0003c.5511 0 .9992.4486.9992 1.0003s-.4481 1.0003-.9992 1.0003m11.4045-6.02l1.996-3.4572c.1197-.2074.0486-.4734-.1588-.5931-.2074-.1197-.4734-.0486-.5931.1588l-2.0242 3.506c-1.4886-.6808-3.1538-1.0664-4.9454-1.0664s-3.4568.3856-4.9454 1.0664L5.2064 5.43c-.1197-.2074-.3857-.2785-.5931-.1588-.2074.1197-.2785.3857-.1588.5931l1.996 3.4572C3.2104 11.099.99 14.8872.99 19.3364h22.02c0-4.4492-2.2204-8.2374-5.4655-10.015"/>
+            </svg>
+            <span>Get Android App (APK)</span>
+          </a>
+        </div>
+
+        <div class="hero-meta">
+          <span>🔒 AES-256-GCM Local Encryption</span>
+          <span>⚡ Zero Cloud Relay</span>
+          <span>👥 Unlimited Multi-Phone Pairing</span>
+          <span>📄 100% Free & Open Source (MIT)</span>
+        </div>
+
+        <!-- Interactive Showcase Graphic -->
+        <div class="hero-showcase">
+          <div class="mockup-wrapper">
+            <div class="mockup-header">
+              <div class="mockup-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+              <div class="mockup-title">Universal Clipboard Sync — Multi-Device Network</div>
+              <div style="font-size:0.75rem; color:#00DD88;">● Local Wi-Fi Active</div>
+            </div>
+
+            <div class="mockup-body">
+              <!-- PC Application Window Preview -->
+              <div class="pc-window">
+                <div class="window-nav">
+                  <div class="window-tab">🔗 Pair Phone</div>
+                  <div class="window-tab active">🟢 Connected (3)</div>
+                  <div class="window-tab">📱 Download App</div>
+                </div>
+
+                <div class="connected-badge-row">
+                  <span class="badge-text">🟢 CONNECTED TO ANDROID</span>
+                  <span class="badge-pill">AES-256-GCM</span>
+                </div>
+
+                <div class="device-list-mock">
+                  <div class="device-row-mock">
+                    <div class="device-meta-mock">
+                      <h4>📱 Tecno Spark 10 Pro</h4>
+                      <p>Android • 🟢 Connected (Active)</p>
+                    </div>
+                    <span style="font-size:0.75rem; color:#CCD8E8;">Ready</span>
+                  </div>
+
+                  <div class="device-row-mock">
+                    <div class="device-meta-mock">
+                      <h4>📱 Samsung Galaxy S24</h4>
+                      <p>Android • 🟢 Connected (Active)</p>
+                    </div>
+                    <span style="font-size:0.75rem; color:#CCD8E8;">Ready</span>
+                  </div>
+
+                  <div class="device-row-mock">
+                    <div class="device-meta-mock">
+                      <h4>📱 Google Pixel 8</h4>
+                      <p>Android • 🟢 Connected (Active)</p>
+                    </div>
+                    <span style="font-size:0.75rem; color:#CCD8E8;">Ready</span>
+                  </div>
+                </div>
+
+                <div class="sync-bar">
+                  Sync: Laptop→Phone: Copied research link (https://baziqhue.co.ke/...)
+                </div>
+              </div>
+
+              <!-- Paired Mobile Devices Preview -->
+              <div class="phone-stack">
+                <div class="phone-card">
+                  <div class="phone-icon-box">📱</div>
+                  <div class="phone-details">
+                    <h4>Tecno Spark 10 Pro</h4>
+                    <p>Background sync active</p>
+                  </div>
+                  <span class="phone-status-tag">Synced</span>
+                </div>
+
+                <div class="phone-card">
+                  <div class="phone-icon-box">📱</div>
+                  <div class="phone-details">
+                    <h4>Samsung Galaxy S24</h4>
+                    <p>Notification tile enabled</p>
+                  </div>
+                  <span class="phone-status-tag">Synced</span>
+                </div>
+
+                <div class="phone-card">
+                  <div class="phone-icon-box">📱</div>
+                  <div class="phone-details">
+                    <h4>Google Pixel 8</h4>
+                    <p>Seamless Accessibility on</p>
+                  </div>
+                  <span class="phone-status-tag">Synced</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         Everyday Benefits
+         ======================================================================== -->
+    <section class="section section-alt" id="features">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Everyday Productivity</span>
+          <h2 class="section-title">Built for Real Daily Workflows</h2>
+          <p class="section-description">
+            Stop emailing text snippets to yourself, opening messaging apps just to transfer a URL, or retyping long references manually.
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🎓</div>
+            <h3 class="feature-title">Students & Researchers</h3>
+            <p class="feature-text">
+              Highlight a quote, citation, or reference link while reading a textbook or article on your phone and paste it directly into your Word document or Google Doc on your laptop.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">💻</div>
+            <h3 class="feature-title">Developers & Sysadmins</h3>
+            <p class="feature-text">
+              Copy two-factor verification codes, API tokens, terminal commands, or short snippets between your testing devices and development workstation without typing errors.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">✍️</div>
+            <h3 class="feature-title">Writers & Journalists</h3>
+            <p class="feature-text">
+              Jot quick ideas on your phone while on the move, then paste them immediately into your desktop editor when you sit at your desk without opening cloud sync tools.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">💼</div>
+            <h3 class="feature-title">Office & Customer Support</h3>
+            <p class="feature-text">
+              Transfer customer order IDs, tracking links, phone numbers, and quick canned responses between your mobile messaging channels and desktop CRM software in one keystroke.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🔒</div>
+            <h3 class="feature-title">Private Local Wi-Fi</h3>
+            <p class="feature-text">
+              Your clipboard data travels directly between your devices over your private local area network. No accounts, no telemetry, no storage on third-party servers.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">👥</div>
+            <h3 class="feature-title">Unlimited Multi-Phone Pairing</h3>
+            <p class="feature-text">
+              Pair your personal phone, work phone, and Android tablet with your Windows workstation. Each device retains its independent identity and syncs harmoniously.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         How It Works
+         ======================================================================== -->
+    <section class="section" id="how-it-works">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Simple Setup</span>
+          <h2 class="section-title">Up and Running in Four Steps</h2>
+          <p class="section-description">
+            Zero complicated network configurations. Start synchronizing your clipboard in under two minutes.
+          </p>
+        </div>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-num">01</div>
+            <h3 class="step-title">Install on Windows</h3>
+            <p class="step-text">
+              Download and run the Windows installer (or portable executable). Universal Clipboard starts quietly in your Windows System Tray near the taskbar clock.
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-num">02</div>
+            <h3 class="step-title">Display Pairing QR</h3>
+            <p class="step-text">
+              Click the tray icon to open the Status Window. A secure, ephemeral pairing QR code is generated specifically for your workstation.
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-num">03</div>
+            <h3 class="step-title">Scan from Phone</h3>
+            <p class="step-text">
+              Open the Android app, tap "Scan QR Code", and point your camera at your computer screen. The cryptographic handshake completes instantly.
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-num">04</div>
+            <h3 class="step-title">Copy & Paste</h3>
+            <p class="step-text">
+              Copy on Windows (Ctrl+C) to update your phone. Copy on your phone to update Windows. Paste anywhere using normal Ctrl+V.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         Multi-Device Architecture & iPhone Support Transparency
+         ======================================================================== -->
+    <section class="section section-alt" id="multi-device">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Cross-Device Architecture</span>
+          <h2 class="section-title">Multi-Phone Pairing & Platform Transparency</h2>
+          <p class="section-description">
+            Honest engineering disclosures: what works today, how multiple devices operate, and our platform roadmap.
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">📱</div>
+            <h3 class="feature-title">Unlimited Android Phones</h3>
+            <p class="feature-text">
+              Universal Clipboard Sync does not enforce arbitrary limits on paired devices. Whether you use a Tecno, Samsung Galaxy, Xiaomi/Redmi, Google Pixel, or OnePlus, your workstation securely maintains distinct cryptographic identities for each phone.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🛡️</div>
+            <h3 class="feature-title">Independent Device Management</h3>
+            <p class="feature-text">
+              From the Windows Status Window, you can inspect all paired phones, rename them for clarity (e.g. "Work Phone", "Home Tablet"), disconnect specific phones, or unpair a device without affecting any other phone.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🍎</div>
+            <h3 class="feature-title">iPhone (iOS) Status & Roadmap</h3>
+            <p class="feature-text">
+              <strong>Honest disclosure:</strong> Apple's iOS platform security strictly forbids third-party apps from continuously monitoring the system clipboard in the background. While PWAs can run on iOS, they cannot provide background clipboard listeners. An iOS companion client is planned on our future roadmap with manual push capabilities.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         Android 13/14+ Restricted Setting Fix Guide
+         ======================================================================== -->
+    <section class="section" id="restricted-setting">
+      <div class="container">
+        <div class="restricted-guide-box">
+          <div class="guide-header">
+            <div class="guide-badge">ANDROID 13, 14 & 15 SECURITY NOTICE</div>
+            <h3 style="font-size: 1.4rem; color: #FFFFFF; font-weight: 700;">
+              Encountered "Restricted setting" on Android? Here is why and how to enable it.
+            </h3>
+          </div>
+
+          <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.95rem; line-height: 1.6;">
+            When you install any application from outside Google Play (such as a downloaded APK from a browser or file manager), Android 13+ automatically marks sensitive settings as restricted to protect users against malicious sideloaded apps. Because Universal Clipboard Sync uses an Accessibility Service to detect when you copy text without opening the app, Android may display:
+            <br><br>
+            <em style="color: #F59E0B; font-weight: 600; font-style: normal; background: rgba(245,158,11,0.1); padding: 4px 8px; border-radius: 4px;">
+              "Restricted setting. For your security, this setting is currently unavailable."
+            </em>
+          </p>
+
+          <div class="guide-steps">
+            <div class="guide-step-card">
+              <h5>Step 1: Open App Info</h5>
+              <p>
+                In the Universal Clipboard app, tap <strong>"Step 1: App Info (Allow)"</strong> (or long-press the app icon on your home screen and tap the ℹ️ <em>App info</em> icon).
+              </p>
+            </div>
+
+            <div class="guide-step-card">
+              <h5>Step 2: Allow Restricted Settings</h5>
+              <p>
+                In the top-right corner of the system App Info screen, tap the <strong>three vertical dots (⋮)</strong> menu. Select <strong>"Allow restricted settings"</strong> and confirm using your phone PIN or fingerprint.
+              </p>
+            </div>
+
+            <div class="guide-step-card">
+              <h5>Step 3: Enable in Accessibility</h5>
+              <p>
+                Return to the app and tap <strong>"Step 2: Accessibility"</strong> (or go to phone Settings → Accessibility → Universal Clipboard Sync). The switch is now unlocked and can be turned <strong>ON</strong>!
+              </p>
+            </div>
+          </div>
+
+          <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-subtle); font-size: 0.84rem; color: var(--text-muted);">
+            🔒 <strong>Our Privacy Guarantee:</strong> The Accessibility Service sets <code>canRetrieveWindowContent="false"</code>. It cannot read your screen, cannot inspect passwords, does not store clipboard history, and only communicates with your paired PC over Wi-Fi.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         Downloads Section
+         ======================================================================== -->
+    <section class="section section-alt" id="downloads">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Verified Downloads</span>
+          <h2 class="section-title">Download Universal Clipboard Sync</h2>
+          <p class="section-description">
+            Official release artifacts verified with cryptographic SHA-256 checksums. Free forever under the MIT License.
+          </p>
+        </div>
+
+        <div class="downloads-wrapper">
+          <div class="download-tabs">
+            <button class="tab-btn active" data-platform="all">All Platforms</button>
+            <button class="tab-btn" data-platform="windows">Windows (Desktop)</button>
+            <button class="tab-btn" data-platform="android">Android (Mobile)</button>
+          </div>
+
+          <div class="download-cards-grid">
+            <!-- Windows Setup Card -->
+            <div class="download-artifact-card" data-platform="windows">
+              <div>
+                <span class="artifact-badge badge-win">WINDOWS 10 / 11</span>
+                <h3 class="artifact-title">Windows Installer</h3>
+                <p class="artifact-desc">
+                  Recommended for desktop & laptop PCs. Full installer with Start Menu shortcuts, tray launch, and clean uninstaller.
+                </p>
+
+                <div class="artifact-meta">
+                  <div><span>Format:</span> <span>.exe Installer</span></div>
+                  <div><span>Size:</span> <span data-config="winSetupSize">42.2 MB</span></div>
+                  <div><span>Version:</span> <span data-config="version">v1.1.0</span></div>
+                  <div class="checksum-row">
+                    <span title="SHA-256 Hash" style="max-width:210px; overflow:hidden; text-overflow:ellipsis;" data-config="winSetupHash">a5df099ffbc718841f2172f21d250d0ba6c8e3c9336e08cc484d75e5f809c5ae</span>
+                    <button class="btn-copy-hash" data-hash="a5df099ffbc718841f2172f21d250d0ba6c8e3c9336e08cc484d75e5f809c5ae">Copy Hash</button>
+                  </div>
+                </div>
+              </div>
+
+              <a href="#" class="btn btn-primary" data-config="winSetupUrl" download>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.401H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.901-1.801"/>
+                </svg>
+                <span>Download Installer (.exe)</span>
+              </a>
+            </div>
+
+            <!-- Windows Portable Card -->
+            <div class="download-artifact-card" data-platform="windows">
+              <div>
+                <span class="artifact-badge badge-win">PORTABLE BUILD</span>
+                <h3 class="artifact-title">Windows Portable</h3>
+                <p class="artifact-desc">
+                  Zero installation required. Single standalone executable suitable for USB drives, restricted workstations, or quick testing.
+                </p>
+
+                <div class="artifact-meta">
+                  <div><span>Format:</span> <span>.exe Standalone</span></div>
+                  <div><span>Size:</span> <span data-config="winPortSize">45.2 MB</span></div>
+                  <div><span>Version:</span> <span data-config="version">v1.1.0</span></div>
+                  <div class="checksum-row">
+                    <span title="SHA-256 Hash" style="max-width:210px; overflow:hidden; text-overflow:ellipsis;" data-config="winPortHash">be603914ae5341d291ac7ae2198e9840cd84b319346f86ecd00bdc7e7de547ce</span>
+                    <button class="btn-copy-hash" data-hash="be603914ae5341d291ac7ae2198e9840cd84b319346f86ecd00bdc7e7de547ce">Copy Hash</button>
+                  </div>
+                </div>
+              </div>
+
+              <a href="#" class="btn btn-secondary" data-config="winPortUrl" download>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+                <span>Download Portable (.exe)</span>
+              </a>
+            </div>
+
+            <!-- Android APK Card -->
+            <div class="download-artifact-card" data-platform="android">
+              <div>
+                <span class="artifact-badge badge-android">ANDROID 8.0 TO 15</span>
+                <h3 class="artifact-title">Android APK</h3>
+                <p class="artifact-desc">
+                  Official Android mobile client with v2 cryptographic signature verification, QR scanner, and background auto-sync.
+                </p>
+
+                <div class="artifact-meta">
+                  <div><span>Format:</span> <span>.apk (Signed)</span></div>
+                  <div><span>Size:</span> <span data-config="apkSize">5.4 MB</span></div>
+                  <div><span>Compatibility:</span> <span>API 26 – 35</span></div>
+                  <div class="checksum-row">
+                    <span title="SHA-256 Hash" style="max-width:210px; overflow:hidden; text-overflow:ellipsis;" data-config="apkHash">758e660d16f6e52d912f95e31fa05e579660fb76e6b8cdecfd5979bbf21e7d3c</span>
+                    <button class="btn-copy-hash" data-hash="758e660d16f6e52d912f95e31fa05e579660fb76e6b8cdecfd5979bbf21e7d3c">Copy Hash</button>
+                  </div>
+                </div>
+              </div>
+
+              <a href="#" class="btn btn-primary" style="background:#008855;" data-config="apkUrl" download>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-1.0003s.4482-1.0003.9993-1.0003c.551 0 .9992.4486.9992 1.0003s-.4482 1.0003-.9992 1.0003m-11.046 0c-.5511 0-.9993-.4486-.9993-1.0003s.4482-1.0003.9993-1.0003c.5511 0 .9992.4486.9992 1.0003s-.4481 1.0003-.9992 1.0003m11.4045-6.02l1.996-3.4572c.1197-.2074.0486-.4734-.1588-.5931-.2074-.1197-.4734-.0486-.5931.1588l-2.0242 3.506c-1.4886-.6808-3.1538-1.0664-4.9454-1.0664s-3.4568.3856-4.9454 1.0664L5.2064 5.43c-.1197-.2074-.3857-.2785-.5931-.1588-.2074.1197-.2785.3857-.1588.5931l1.996 3.4572C3.2104 11.099.99 14.8872.99 19.3364h22.02c0-4.4492-2.2204-8.2374-5.4655-10.015"/>
+                </svg>
+                <span>Download APK (.apk)</span>
+              </a>
+            </div>
+
+            <!-- Official Download QR Card -->
+            <div class="qr-box-card">
+              <span class="artifact-badge" style="background:#1E293B; color:#CCD8E8;">📱 PHONE SCAN</span>
+              <h3 class="artifact-title">Scan to Download</h3>
+              <p class="artifact-desc">Point your phone's camera at this QR code to open the official download page on your device.</p>
+              <div class="qr-frame">
+                <img src="assets/download_qr.png" alt="Official Universal Clipboard Sync Download QR Code">
+              </div>
+              <p style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);">
+                Verified GitHub Release v1.1.0
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         Privacy & Security
+         ======================================================================== -->
+    <section class="section" id="privacy">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Privacy & Security</span>
+          <h2 class="section-title">Your Data Stays on Your Devices</h2>
+          <p class="section-description">
+            Universal Clipboard Sync is engineered with zero telemetry, zero analytics tracking, and zero cloud storage.
+          </p>
+        </div>
+
+        <div class="privacy-grid">
+          <div class="privacy-card">
+            <h4>🔒 Local Network Only</h4>
+            <p>
+              Clipboard content is transferred strictly between your paired devices across your local Wi-Fi router. Content is never routed through third-party servers.
+            </p>
+          </div>
+
+          <div class="privacy-card">
+            <h4>🛡️ AES-256-GCM Encryption</h4>
+            <p>
+              Every text payload and image is encrypted end-to-end using authenticated AES-256-GCM ciphers before transmission over the WebSocket link.
+            </p>
+          </div>
+
+          <div class="privacy-card">
+            <h4>🔑 Windows DPAPI Key Protection</h4>
+            <p>
+              The master pairing secret is protected at rest on Windows using Microsoft's Data Protection API (DPAPI), bound securely to your Windows user credentials.
+            </p>
+          </div>
+
+          <div class="privacy-card">
+            <h4>🚫 No Cloud Analytics or Tracking</h4>
+            <p>
+              The application contains zero telemetry SDKs, crash report collectors, or behavioral tracking scripts. Read our complete <a href="privacy.html" style="color:var(--accent-cyan); text-decoration:underline;">Privacy Policy</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         FAQ Section
+         ======================================================================== -->
+    <section class="section section-alt" id="faq">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-tag">Common Questions</span>
+          <h2 class="section-title">Frequently Asked Questions</h2>
+        </div>
+
+        <div class="faq-list">
+          <details class="faq-item">
+            <summary class="faq-question">Does Universal Clipboard require an active internet connection?</summary>
+            <div class="faq-answer">
+              No! Universal Clipboard operates entirely over your local Wi-Fi network (or even a mobile phone Wi-Fi hotspot). Even if your internet connection goes down, your devices continue synchronizing without interruption.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">How many Android phones can I pair with one Windows computer?</summary>
+            <div class="faq-answer">
+              You can pair multiple Android devices simultaneously. The Windows server tracks each phone by a stable unique device identifier. From the desktop window, you can view all paired phones, rename them, or disconnect individual devices.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">Why does Android show "Restricted setting" when enabling accessibility?</summary>
+            <div class="faq-answer">
+              This is a standard security protection introduced in Android 13+ for apps installed outside the Google Play Store (sideloaded APKs). To allow it: go to phone Settings → Apps → Universal Clipboard → tap the three vertical dots (⋮) in the top-right corner → tap "Allow restricted settings" → authenticate with your screen lock. Then you can turn Accessibility ON.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">Is an iPhone (iOS) version available?</summary>
+            <div class="faq-answer">
+              Currently, Universal Clipboard Sync supports Windows (10/11) and Android (8.0 to 15). Apple iOS strictly restricts background clipboard monitoring due to sandboxing policies. An iOS companion client with manual sync capabilities is planned for a future release.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">What is the difference between the Windows Installer and Portable build?</summary>
+            <div class="faq-answer">
+              The Installer registers Universal Clipboard in your Start Menu and creates shortcuts with automatic startup options. The Portable build is a single standalone executable that runs immediately without installing or requiring administrator rights.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">How do I unpair or disconnect a device?</summary>
+            <div class="faq-answer">
+              On Windows, open the Status Window and click the ❌ icon next to any device to unpair it, or click "Disconnect" to drop an active connection. On Android, tap the "Disconnect" button on the main screen.
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================
+         Support & Central Contact
+         ======================================================================== -->
+    <section class="section" id="support">
+      <div class="container" style="text-align: center; max-width: 680px;">
+        <span class="section-tag">Direct Assistance</span>
+        <h2 class="section-title">Support & Feedback</h2>
+        <p class="section-description" style="margin-bottom: 24px;">
+          Have questions, suggestions, or need help troubleshooting a connection? Reach out directly to our maintainer or submit an issue on GitHub.
+        </p>
+
+        <div style="background:var(--bg-card); border:1px solid var(--border-medium); border-radius:var(--radius-lg); padding:32px; margin-bottom:24px;">
+          <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Official Support Contact</div>
+          <a href="mailto:gmuraguri75@gmail.com" class="support-email-link" data-config="supportEmail" style="font-size:1.25rem; font-weight:700; color:var(--accent-cyan); text-decoration:none;">
+            gmuraguri75@gmail.com
+          </a>
+          <p style="font-size:0.88rem; color:var(--text-secondary); margin-top:10px;">
+            Direct email response for technical support, feature feedback, and security inquiries.
+          </p>
+        </div>
+
+        <div>
+          <a href="https://github.com/Jow75/universal-clipboard-sync/issues" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" data-config="githubRepo">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+            <span>Open Issue on GitHub</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================================
+       Footer
+       ======================================================================== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <h3>Universal Clipboard Sync</h3>
+          <p>
+            Effortless, secure cross-device clipboard synchronization between Windows and Android devices over your private local Wi-Fi.
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <ul class="footer-links">
+            <li><a href="#features" class="footer-link">Features</a></li>
+            <li><a href="#how-it-works" class="footer-link">How It Works</a></li>
+            <li><a href="#multi-device" class="footer-link">Multi-Device</a></li>
+            <li><a href="#downloads" class="footer-link">Downloads</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Platform & Guides</h4>
+          <ul class="footer-links">
+            <li><a href="#restricted-setting" class="footer-link">Android 13+ Setup</a></li>
+            <li><a href="privacy.html" class="footer-link">Privacy Policy</a></li>
+            <li><a href="#faq" class="footer-link">FAQ</a></li>
+            <li><a href="https://github.com/Jow75/universal-clipboard-sync" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub Repository</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Creator Attribution</h4>
+          <ul class="footer-links">
+            <li>
+              <a href="https://baziqhue.co.ke/" target="_blank" rel="noopener noreferrer" class="built-by-link" data-config="parentLink">
+                Built by BAZIQHUE
+              </a>
+            </li>
+            <li style="font-size:0.82rem; color:var(--text-muted); margin-top:6px;">
+              Parent Website: <a href="https://baziqhue.co.ke/" target="_blank" rel="noopener noreferrer" style="color:#00D2FF;">baziqhue.co.ke</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          © 2026 Universal Clipboard Sync. Licensed under the <strong>MIT License</strong>.
+        </div>
+        <div>
+          Proudly <a href="https://baziqhue.co.ke/" target="_blank" rel="noopener noreferrer" class="built-by-link">Built by BAZIQHUE</a>.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="site-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

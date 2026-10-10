@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — Universal Clipboard Sync</title>
+  <meta name="description" content="Privacy Policy for Universal Clipboard Sync. Full transparency into our local Wi-Fi architecture, zero telemetry, and permission models.">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .legal-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 60px 0;
+    }
+    .legal-content h1 {
+      font-family: var(--font-display);
+      font-size: 2.4rem;
+      margin-bottom: 8px;
+    }
+    .legal-content .last-updated {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+    }
+    .legal-content h2 {
+      font-size: 1.4rem;
+      color: var(--accent-cyan);
+      margin-top: 36px;
+      margin-bottom: 12px;
+    }
+    .legal-content h3 {
+      font-size: 1.1rem;
+      color: var(--text-primary);
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+    .legal-content p, .legal-content li {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin-bottom: 14px;
+    }
+    .legal-content ul {
+      padding-left: 24px;
+      margin-bottom: 18px;
+    }
+    .legal-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin: 24px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="container nav-container">
+      <a href="index.html" class="brand">
+        <img src="assets/icon.png" alt="Universal Clipboard Icon" class="brand-icon">
+        <span>Universal Clipboard</span>
+        <span class="brand-tag">Privacy</span>
+      </a>
+
+      <div class="nav-actions">
+        <a href="index.html" class="btn-nav-download">
+          <span>← Back to Product</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main style="padding-top: var(--header-height);">
+    <div class="container legal-content">
+      <h1>Privacy Policy & Data Transparency</h1>
+      <div class="last-updated">Last Updated: October 2026 • Universal Clipboard Sync v1.1.0</div>
+
+      <div class="legal-box">
+        <h3 style="color:#00E599; margin-top:0;">Summary Guarantee</h3>
+        <p>
+          Universal Clipboard Sync is an open-source productivity utility designed from the ground up to operate locally across your own private Wi-Fi network. <strong>We do not collect, transmit, store, or sell your personal data or clipboard contents.</strong> There are no user accounts, no cloud servers, no usage tracking, and no external advertising networks.
+        </p>
+      </div>
+
+      <h2>1. What Information We Process</h2>
+      <p>
+        To perform clipboard synchronization as requested by the user, the software processes the following data exclusively between your paired devices:
+      </p>
+      <ul>
+        <li><strong>Clipboard Content:</strong> Text snippets and images copied by the user are temporarily held in local system memory to be transmitted over your local Wi-Fi connection directly to your paired devices. They are never transmitted to external cloud servers.</li>
+        <li><strong>Device Identifiers:</strong> A locally generated UUID (universally unique identifier) and device model name (e.g., "Windows PC", "Tecno Spark 10", "Samsung Galaxy S24") are exchanged during initial QR pairing to establish stable mutual authentication.</li>
+        <li><strong>Cryptographic Pairing Keys:</strong> A 256-bit AES master secret is generated locally on your Windows PC and protected at rest using Microsoft Data Protection API (DPAPI). On Android, pairing keys are protected in encrypted system preferences backed by the Android KeyStore.</li>
+      </ul>
+
+      <h2>2. What We Do NOT Collect</h2>
+      <p>
+        Based on our verified source code architecture:
+      </p>
+      <ul>
+        <li>We do <strong>not</strong> operate central user accounts or profile databases.</li>
+        <li>We do <strong>not</strong> bundle third-party analytics SDKs (such as Google Analytics, Firebase Analytics, or Mixpanel).</li>
+        <li>We do <strong>not</strong> collect crash telemetry or diagnostics without explicit user export.</li>
+        <li>We do <strong>not</strong> log or store clipboard contents after the application is closed.</li>
+      </ul>
+
+      <h2>3. Device Permissions & Purpose</h2>
+      <h3>Android Operating System</h3>
+      <ul>
+        <li><strong>Accessibility Service (<code>ClipboardAccessibilityService</code>):</strong> Used solely to detect clipboard copy events when other apps are active so text can sync seamlessly in the background. It is configured with <code>canRetrieveWindowContent="false"</code>, meaning it cannot inspect your screen, read passwords, or access other apps' visual data.</li>
+        <li><strong>Camera (<code>android.permission.CAMERA</code>):</strong> Used exclusively to scan the pairing QR code displayed on your PC screen during the 5-second initial pairing process. No camera images or video frames are saved or transmitted.</li>
+        <li><strong>Foreground Service & Notifications:</strong> Used to maintain a persistent local WebSocket client and display an actionable "Sync to PC" notification tile.</li>
+      </ul>
+
+      <h3>Windows Operating System</h3>
+      <ul>
+        <li><strong>Clipboard Access:</strong> Listens to Windows clipboard update events and writes received text/images to the Windows clipboard buffer.</li>
+        <li><strong>Local Network Access:</strong> Binds a local WebSocket server to port <code>8765</code> and a UDP discovery beacon to port <code>8766</code> on your local subnet.</li>
+      </ul>
+
+      <h2>4. Data Retention and Deletion</h2>
+      <p>
+        Clipboard data is held only in transient memory during transmission and is not written to permanent disk storage. You can instantly delete all pairing credentials by clicking <strong>"Unpair All Devices"</strong> on Windows, or tapping <strong>"Disconnect"</strong> on Android.
+      </p>
+
+      <h2>5. Open Source Auditability</h2>
+      <p>
+        Universal Clipboard Sync is licensed under the permissive MIT License. You can independently review and verify our complete implementation in the public GitHub repository at:
+        <br>
+        <a href="https://github.com/Jow75/universal-clipboard-sync" target="_blank" rel="noopener noreferrer" style="color:var(--accent-cyan);">https://github.com/Jow75/universal-clipboard-sync</a>
+      </p>
+
+      <h2>6. Support & Contact</h2>
+      <p>
+        For inquiries regarding this privacy statement or security disclosures, contact our team at:
+        <br>
+        <strong style="color:var(--accent-cyan);" data-config="supportEmail">gmuraguri75@gmail.com</strong>
+      </p>
+      <p>
+        Parent Organization Attribution: <a href="https://baziqhue.co.ke/" target="_blank" rel="noopener noreferrer" style="color:var(--accent-cyan);" data-config="parentLink">Built by BAZIQHUE</a> (<a href="https://baziqhue.co.ke/" target="_blank" rel="noopener noreferrer" style="color:var(--text-secondary);">https://baziqhue.co.ke/</a>)
+      </p>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-bottom">
+      <div>© 2026 Universal Clipboard Sync. MIT License.</div>
+      <div><a href="https://baziqhue.co.ke/" target="_blank" rel="noopener noreferrer" class="built-by-link">Built by BAZIQHUE</a></div>
+    </div>
+  </footer>
+
+  <script src="site-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
