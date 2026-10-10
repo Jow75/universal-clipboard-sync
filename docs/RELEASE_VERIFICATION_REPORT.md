@@ -3,7 +3,7 @@
 **Report Date**: 2026-10-10  
 **Target Platforms**: Windows 10, Windows 11 (x64) and Android (API 26–35)  
 **Release Version**: `1.1.0` (Android versionCode: `2`, versionName: `"1.1.0"`)  
-**Canonical Repository**: `JOWGEI-hub/universal-clipboard-sync`  
+**Canonical Repository**: `Jow75/universal-clipboard-sync`  
 **Git Branch**: `master`  
 
 ---
@@ -14,7 +14,7 @@ All build deliverables have been compiled, verified, and placed in `dist/`.
 
 | Artifact File | Deliverable Type | File Size (Bytes) | SHA-256 Checksum |
 | :--- | :--- | :--- | :--- |
-| **`UniversalClipboard-Setup-1.1.0.exe`** | Windows Setup Installer (Inno Setup 6) | 44,276,974 bytes | `b2c1dee8c5cf7fc68d46ef1ecd5b2c9beb91af982342d19a40acddac9e10b840` |
+| **`UniversalClipboard-Setup-1.1.0.exe`** | Windows Setup Installer (Inno Setup 6) | 44,276,974 bytes | `a5df099ffbc718841f2172f21d250d0ba6c8e3c9336e08cc484d75e5f809c5ae` |
 | **`UniversalClipboard-Portable-1.1.0.exe`** | Windows Standalone Portable Executable (PyInstaller) | 47,445,328 bytes | `be603914ae5341d291ac7ae2198e9840cd84b319346f86ecd00bdc7e7de547ce` |
 | **`UniversalClipboard-Android-1.1.0.apk`** | Android Release APK (v2 Signed) | 5,698,075 bytes | `758e660d16f6e52d912f95e31fa05e579660fb76e6b8cdecfd5979bbf21e7d3c` |
 | **`SHA256SUMS.txt`** | Checksum Verification Manifest | 276 bytes | `6f3801ea8f65e2365a1097fa668ef4ef3c6ce0fc5da4db2bf5fb731c3a649820` |
@@ -74,7 +74,7 @@ Output:
 ## 4. Download QR Code Verification
 
 - **Artifact**: `dist/download_qr.png` / `docs/assets/download_qr.png`
-- **Encoded Payload**: `https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest`
+- **Encoded Payload**: `https://github.com/Jow75/universal-clipboard-sync/releases/latest`
 - **Verification Tool**: OpenCV 4.13.0 `QRCodeDetector().detectAndDecode()`
 - **Result**: **PASS** — Exact match confirmed.
 
@@ -84,8 +84,8 @@ Output:
 
 | Platform / File | Canonical Link | Availability Status |
 | :--- | :--- | :--- |
-| **GitHub Releases Page** | `https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest` | Dependent on GitHub repo publication/tag push |
-| **Windows Installer** | `https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Setup-1.1.0.exe` | Staged locally in `dist/` |
-| **Windows Portable** | `https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Portable-1.1.0.exe` | Staged locally in `dist/` |
-| **Android APK** | `https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Android-1.1.0.apk` | Staged locally in `dist/` |
+| **GitHub Releases Page** | `https://github.com/Jow75/universal-clipboard-sync/releases/latest` | Dependent on GitHub repo publication/tag push |
+| **Windows Installer** | `https://github.com/Jow75/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Setup-1.1.0.exe` | Staged locally in `dist/` |
+| **Windows Portable** | `https://github.com/Jow75/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Portable-1.1.0.exe` | Staged locally in `dist/` |
+| **Android APK** | `https://github.com/Jow75/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Android-1.1.0.apk` | Staged locally in `dist/` |
 | **Local Wi-Fi Download** | `http://<YOUR_PC_IP>:8765/download` | **LIVE & ACTIVE** immediately whenever Windows app runs |

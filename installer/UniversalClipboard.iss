@@ -2,7 +2,7 @@
 #define MyAppName "Universal Clipboard Sync"
 #define MyAppVersion "1.1.0"
 #define MyAppPublisher "Universal Clipboard Project"
-#define MyAppURL "https://github.com/JOWGEI-hub/universal-clipboard-sync"
+#define MyAppURL "https://github.com/Jow75/universal-clipboard-sync"
 #define MyAppExeName "UniversalClipboard.exe"
 
 [Setup]

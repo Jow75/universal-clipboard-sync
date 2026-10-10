@@ -8,7 +8,7 @@ This document defines the formal validation protocol for **Universal Clipboard S
 
 | Step | Test Procedure | Expected Outcome | Verification Status | Verification Evidence / Log |
 | :--- | :--- | :--- | :--- | :--- |
-| **E2E-01** | Download Windows installer/portable from verified release | Valid executable downloads, SHA-256 matches manifest | **PASS** (Local Build) | SHA-256: `b2c1dee8c5cf7fc68d46ef1ecd5b2c9beb91af982342d19a40acddac9e10b840` |
+| **E2E-01** | Download Windows installer/portable from verified release | Valid executable downloads, SHA-256 matches manifest | **PASS** (Local Build) | SHA-256: `a5df099ffbc718841f2172f21d250d0ba6c8e3c9336e08cc484d75e5f809c5ae` |
 | **E2E-02** | Install or run Windows application | Application starts in system tray; port 8765 binds; UDP discovery starts | **PASS** (Automated Test) | Validated in `tests/test_server_auth.py`, `tests/test_network_discovery.py` |
 | **E2E-03** | Open Status Window | Shows pairing QR code, Version 1.1.0, expiration counter, and network status | **PASS** (Automated Test) | Validated in `tests/test_ui_state.py::test_window_state_transitions` |
 | **E2E-04** | Scan pairing QR code from Android phone | Phone captures pairing payload; establishes encrypted WebSocket connection | **PASS** (Integration Test) | Validated in `tests/test_server_auth.py::test_qr_pairing_and_key_provisioning` |
@@ -23,7 +23,7 @@ This document defines the formal validation protocol for **Universal Clipboard S
 | **E2E-13** | Network interruption recovery (Wi-Fi toggle) | OkHttp client detects disconnect, initiates exponential backoff with jitter | **PASS** (Unit Test) | Validated in `ConnectionStateTest.kt` (backoff: 2s -> 4s -> 8s... max 30s) |
 | **E2E-14** | Reconnection without re-pairing | Client reconnects using stored Keystore master key; session restored | **PASS** (Automated Test) | Validated in `tests/test_server_auth.py` and `tests/test_config.py` |
 | **E2E-15** | Notification / Quick Settings fallback | User taps `[ 📋 Send to PC ]` in notification; clipboard sent immediately | **PENDING** (Physical Device) | Action handler implemented in `ClipboardService.kt` |
-| **E2E-16** | Verify Download QR code | Scanned QR decodes to `https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest` | **PASS** (Decoded by OpenCV) | Validated in `scripts/generate_download_qr.py` via `cv2.QRCodeDetector` |
+| **E2E-16** | Verify Download QR code | Scanned QR decodes to `https://github.com/Jow75/universal-clipboard-sync/releases/latest` | **PASS** (Decoded by OpenCV) | Validated in `scripts/generate_download_qr.py` via `cv2.QRCodeDetector` |
 | **E2E-17** | Data and identity safety | Existing configuration and keys retained without corruption or erasure | **PASS** (Automated Test) | Validated in `tests/test_config.py::test_key_persistence_across_restarts` |
 
 ---

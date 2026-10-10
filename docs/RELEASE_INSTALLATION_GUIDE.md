@@ -28,7 +28,7 @@ Choose either the **Recommended Installer** or the **Portable Version**:
 ### Step 1: Download the APK
 You can get the Android app in two ways:
 - **Direct from your PC**: Open the Windows app, click the **Download APK** tab, and scan the QR code with your phone camera or visit `http://<your-pc-ip>:8765/download` in your phone browser.
-- **Direct from GitHub**: Download `UniversalClipboard-Android-1.1.0.apk` from the official [GitHub Releases page](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest).
+- **Direct from GitHub**: Download `UniversalClipboard-Android-1.1.0.apk` from the official [GitHub Releases page](https://github.com/Jow75/universal-clipboard-sync/releases/latest).
 
 ### Step 2: Install the APK
 1. Open your phone's **Downloads** or File Manager and tap `UniversalClipboard-Android-1.1.0.apk`.

@@ -16,7 +16,7 @@ class TestUIState(unittest.TestCase):
     def test_version_constants(self):
         self.assertEqual(APP_NAME, "Universal Clipboard Sync")
         self.assertEqual(APP_VERSION, "1.1.0")
-        self.assertIn("github.com/JOWGEI-hub/universal-clipboard-sync", CANONICAL_DOWNLOAD_PAGE)
+        self.assertIn("github.com/Jow75/universal-clipboard-sync", CANONICAL_DOWNLOAD_PAGE)
 
     def test_window_state_transitions(self):
         win = DesktopConnectionWindow(self.session)

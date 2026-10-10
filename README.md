@@ -4,9 +4,9 @@
 
 Universal Clipboard Sync bridges your Windows desktop and Android phone over your local Wi-Fi network. Copy text or screenshots on your PC and paste them instantly on your phone, or send copied text and images from Android back to your PC with zero friction.
 
-[![Release](https://img.shields.io/badge/Release-v1.1.0-blue.svg)](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest)
-[![Platform Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg)](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest)
-[![Platform Android](https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026--35)-3DDC84.svg)](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest)
+[![Release](https://img.shields.io/badge/Release-v1.1.0-blue.svg)](https://github.com/Jow75/universal-clipboard-sync/releases/latest)
+[![Platform Windows](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg)](https://github.com/Jow75/universal-clipboard-sync/releases/latest)
+[![Platform Android](https://img.shields.io/badge/Platform-Android%208.0%2B%20(API%2026--35)-3DDC84.svg)](https://github.com/Jow75/universal-clipboard-sync/releases/latest)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
@@ -15,16 +15,16 @@ Universal Clipboard Sync bridges your Windows desktop and Android phone over you
 
 | Package | Format | Size | Description | Download Link |
 | :--- | :--- | :--- | :--- | :--- |
-| **Windows Setup** | `.exe` (Installer) | ~44 MB | Recommended for Windows 10 & 11. Includes Start Menu & Desktop shortcuts | [Download Setup](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Setup-1.1.0.exe) |
-| **Windows Portable** | `.exe` (Standalone) | ~47 MB | Single-file portable executable, runs without installation | [Download Portable](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Portable-1.1.0.exe) |
-| **Android App** | `.apk` (v2 Signed) | ~5.7 MB | For Android phones & tablets (Android 8.0 to Android 15) | [Download APK](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Android-1.1.0.apk) |
+| **Windows Setup** | `.exe` (Installer) | ~44 MB | Recommended for Windows 10 & 11. Includes Start Menu & Desktop shortcuts | [Download Setup](https://github.com/Jow75/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Setup-1.1.0.exe) |
+| **Windows Portable** | `.exe` (Standalone) | ~47 MB | Single-file portable executable, runs without installation | [Download Portable](https://github.com/Jow75/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Portable-1.1.0.exe) |
+| **Android App** | `.apk` (v2 Signed) | ~5.7 MB | For Android phones & tablets (Android 8.0 to Android 15) | [Download APK](https://github.com/Jow75/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Android-1.1.0.apk) |
 
 ### 📱 Scan to Download Android APK
 Scan this official download QR code with your phone camera to download the latest release:
 
 ![Download Universal Clipboard Sync](docs/assets/download_qr.png)
 
-*Direct Link:* [https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest](https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest)
+*Direct Link:* [https://github.com/Jow75/universal-clipboard-sync/releases/latest](https://github.com/Jow75/universal-clipboard-sync/releases/latest)
 
 > **Local Network Download**: When the Windows application is running, you can also download the Android APK directly over your home Wi-Fi at `http://<YOUR_PC_IP>:8765/download` without needing internet access!
 
@@ -35,7 +35,7 @@ Scan this official download QR code with your phone camera to download the lates
 Users can verify binary integrity using SHA-256 checksums:
 
 ```text
-b2c1dee8c5cf7fc68d46ef1ecd5b2c9beb91af982342d19a40acddac9e10b840  UniversalClipboard-Setup-1.1.0.exe
+a5df099ffbc718841f2172f21d250d0ba6c8e3c9336e08cc484d75e5f809c5ae  UniversalClipboard-Setup-1.1.0.exe
 be603914ae5341d291ac7ae2198e9840cd84b319346f86ecd00bdc7e7de547ce  UniversalClipboard-Portable-1.1.0.exe
 758e660d16f6e52d912f95e31fa05e579660fb76e6b8cdecfd5979bbf21e7d3c  UniversalClipboard-Android-1.1.0.apk
 ```

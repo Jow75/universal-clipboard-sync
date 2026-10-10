@@ -4,7 +4,7 @@ import qrcode
 from PIL import Image, ImageDraw, ImageFont
 import cv2
 
-CANONICAL_URL = "https://github.com/JOWGEI-hub/universal-clipboard-sync/releases/latest"
+CANONICAL_URL = "https://github.com/Jow75/universal-clipboard-sync/releases/latest"
 
 def generate_download_qr():
     # 1. Generate QR Code
