@@ -1,6 +1,9 @@
 # Universal Clipboard Sync — Product Landing Website & Netlify Guide
 
-This directory contains the official production landing website for **Universal Clipboard Sync**. It is completely self-contained, lightweight, accessible, and ready for one-click deployment to Netlify or any modern static web host.
+This directory contains the official production landing website for **Universal Clipboard Sync**. It is completely self-contained, lightweight, accessible, and deployed live to production.
+
+- **Live Production URL**: [https://universal-clipboard.netlify.app/](https://universal-clipboard.netlify.app/)
+- **Repository**: [https://github.com/Jow75/universal-clipboard-sync](https://github.com/Jow75/universal-clipboard-sync)
 
 ---
 

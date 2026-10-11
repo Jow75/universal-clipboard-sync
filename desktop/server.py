@@ -97,8 +97,8 @@ class SecureWebSocketServer:
         self.active_pairing_session = None
 
     async def websocket_handler(self, request):
-        # Limit connection count to prevent resource exhaustion
-        if len(self.authenticated_clients) + len(self.pending_clients) >= 8:
+        # Limit connection count to prevent resource exhaustion (supports up to 64 concurrent phones/tablets)
+        if len(self.authenticated_clients) + len(self.pending_clients) >= 64:
             logger.warning(f"Connection rejected: max clients reached ({request.remote})")
             return web.Response(status=503, text="Server busy")
 
@@ -170,11 +170,20 @@ class SecureWebSocketServer:
                                         asyncio.create_task(old_ws.close(code=1000, message=b"Superseded by new connection"))
 
                                 import time
+                                now_ts = time.time()
                                 self.clients_by_id[device_id] = {
                                     "ws": ws,
                                     "name": client_info["name"],
-                                    "connected_at": time.time()
+                                    "connected_at": now_ts,
+                                    "last_seen": now_ts
                                 }
+
+                                # Register in persistent paired devices store
+                                try:
+                                    from desktop.config import add_or_update_paired_device
+                                    add_or_update_paired_device(device_id, client_info["name"], "Android")
+                                except Exception as e_cfg:
+                                    logger.warning(f"Could not record paired device in config: {e_cfg}")
 
                                 ok_data = {
                                     "v": PROTOCOL_VERSION,
@@ -213,6 +222,9 @@ class SecureWebSocketServer:
                             break
                     else:
                         # Client is authenticated -> process clipboard content
+                        import time
+                        if client_info["id"] in self.clients_by_id:
+                            self.clients_by_id[client_info["id"]]["last_seen"] = time.time()
                         if self.on_receive:
                             await asyncio.get_event_loop().run_in_executor(
                                 None, self.on_receive, msg.data
@@ -234,6 +246,13 @@ class SecureWebSocketServer:
                 del self.clients_by_id[device_id]
                 is_active_socket = True
 
+            if is_active_socket and device_id and device_id != "unknown":
+                try:
+                    from desktop.config import update_device_last_seen
+                    update_device_last_seen(device_id)
+                except Exception:
+                    pass
+
             logger.info(f"Client socket closed: {client_remote} (id={device_id}, was_auth={was_auth}, active={is_active_socket})")
             # Only trigger on_client_disconnected if this was the authoritative socket for that client
             if was_auth and is_active_socket and self.on_client_disconnected:
@@ -244,10 +263,31 @@ class SecureWebSocketServer:
     def get_active_client_info(self) -> list:
         """Returns list of active client information dictionaries."""
         return [
-            {"id": dev_id, "name": data.get("name", "Android Device")}
+            {
+                "id": dev_id,
+                "name": data.get("name", "Android Device"),
+                "connected_at": data.get("connected_at", 0),
+                "last_seen": data.get("last_seen", data.get("connected_at", 0))
+            }
             for dev_id, data in self.clients_by_id.items()
-            if not data.get("ws").closed
+            if data.get("ws") and not data.get("ws").closed
         ]
+
+    async def disconnect_device(self, device_id: str):
+        """Cleanly disconnects a specific client by its device ID without affecting other phones."""
+        if device_id in self.clients_by_id:
+            data = self.clients_by_id[device_id]
+            ws = data.get("ws")
+            if ws and not ws.closed:
+                try:
+                    await ws.close(code=1000, message=b"Disconnected by user")
+                except Exception:
+                    pass
+            self.authenticated_clients.discard(ws)
+            self.clients_by_id.pop(device_id, None)
+            logger.info(f"Disconnected device {device_id} cleanly on demand.")
+            if self.on_client_disconnected:
+                self.on_client_disconnected(device_id)
 
     async def disconnect_all_clients(self):
         """Cleanly disconnects all connected clients."""
@@ -261,12 +301,25 @@ class SecureWebSocketServer:
         self.authenticated_clients.clear()
         self.clients_by_id.clear()
 
-    async def broadcast(self, message: str):
+    async def broadcast(self, message: str, exclude_device_id: str = None):
         """Broadcasts an encrypted payload strictly to authenticated clients."""
         if not self.authenticated_clients:
             return
-        logger.info(f"Broadcasting to {len(self.authenticated_clients)} authenticated client(s).")
-        tasks = [self._send_safe(ws, message) for ws in list(self.authenticated_clients)]
+        targets = []
+        for dev_id, data in self.clients_by_id.items():
+            if exclude_device_id and dev_id == exclude_device_id:
+                continue
+            ws = data.get("ws")
+            if ws and ws in self.authenticated_clients and not ws.closed:
+                targets.append(ws)
+        for ws in list(self.authenticated_clients):
+            if ws not in targets and not ws.closed:
+                targets.append(ws)
+        targets = list(set(targets))
+        if not targets:
+            return
+        logger.info(f"Broadcasting to {len(targets)} authenticated client(s).")
+        tasks = [self._send_safe(ws, message) for ws in targets]
         if tasks:
             await asyncio.gather(*tasks)
 

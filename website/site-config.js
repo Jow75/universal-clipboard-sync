@@ -9,6 +9,7 @@ const SITE_CONFIG = {
   releaseTag: "v1.1.0",
   releaseDate: "October 2026",
   license: "MIT License",
+  websiteUrl: "https://universal-clipboard.netlify.app/",
 
   // GitHub & Source Code
   githubRepoUrl: "https://github.com/Jow75/universal-clipboard-sync",

@@ -302,24 +302,72 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateAccessibilityButton() {
-        if (isAccessibilityServiceEnabled()) {
-            accessibilityButton.text = "⚡ Seamless Auto-Sync: Active"
-            accessibilityButton.setTextColor(Color.parseColor("#00DD88"))
-            accessibilityButton.setOnClickListener {
-                Toast.makeText(this, "Seamless background sync is active! Copied text syncs automatically.", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            accessibilityButton.text = "⚡ Enable Seamless Auto-Sync (No Taps)"
-            accessibilityButton.setTextColor(Color.parseColor("#FFAA00"))
-            accessibilityButton.setOnClickListener {
-                try {
-                    startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                    Toast.makeText(this, "Enable 'Universal Clipboard Sync' to sync copied text without opening the app", Toast.LENGTH_LONG).show()
-                } catch (e: Exception) {
-                    Toast.makeText(this, "Open Android Settings → Accessibility → Universal Clipboard Sync", Toast.LENGTH_LONG).show()
+        val isAccEnabled = isAccessibilityServiceEnabled()
+        if (isAccEnabled) {
+            if (isConnected) {
+                accessibilityButton.text = "⚡ Auto-Sync: Active & Connected"
+                accessibilityButton.setTextColor(Color.parseColor("#00DD88"))
+                accessibilityButton.setOnClickListener {
+                    Toast.makeText(this, "✅ Seamless auto-sync is active! Copied text syncs automatically to your PC.", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                accessibilityButton.text = "⚡ Accessibility Active (PC Offline)"
+                accessibilityButton.setTextColor(Color.parseColor("#00D2FF"))
+                accessibilityButton.setOnClickListener {
+                    Toast.makeText(this, "Accessibility is running, but PC connection is offline. Tap Reconnect above.", Toast.LENGTH_LONG).show()
                 }
             }
+        } else {
+            if (Build.VERSION.SDK_INT >= 33) {
+                accessibilityButton.text = "⚡ Enable Auto-Sync (Restricted Setting Guide)"
+            } else {
+                accessibilityButton.text = "⚡ Enable Seamless Auto-Sync (No Taps)"
+            }
+            accessibilityButton.setTextColor(Color.parseColor("#FFAA00"))
+            accessibilityButton.setOnClickListener {
+                showAccessibilitySetupDialog()
+            }
         }
+    }
+
+    private fun showAccessibilitySetupDialog() {
+        val message = StringBuilder()
+            .append("Universal Clipboard uses an Accessibility Service to detect when you copy text, allowing it to sync automatically with your PC in the background without needing to open the app.\n\n")
+            .append("🔒 Privacy Guarantee:\n")
+            .append("• Does NOT read your screen contents or inspect personal data (canRetrieveWindowContent is disabled).\n")
+            .append("• Does NOT upload clipboard content to external cloud servers.\n")
+            .append("• Operates exclusively over your private local Wi-Fi link.\n\n")
+            .append("⚠️ Android 13/14/15 'Restricted Setting' Fix:\n")
+            .append("If Android displays 'Restricted setting. For your security, this setting is currently unavailable':\n\n")
+            .append("1. Tap 'Step 1: App Info (Allow)' below.\n")
+            .append("2. Tap the three dots (⋮) in the top-right corner.\n")
+            .append("3. Tap 'Allow restricted settings' and confirm your screen lock (PIN/fingerprint).\n")
+            .append("4. Return here and tap 'Step 2: Accessibility'.")
+            .toString()
+
+        AlertDialog.Builder(this)
+            .setTitle("⚡ Seamless Auto-Sync Setup")
+            .setMessage(message)
+            .setPositiveButton("Step 2: Accessibility") { _, _ ->
+                try {
+                    startActivity(Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Open Settings → Accessibility → Universal Clipboard Sync", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNeutralButton("Step 1: App Info (Allow)") { _, _ ->
+                try {
+                    val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = android.net.Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                    Toast.makeText(this, "Tap (⋮) top-right → 'Allow restricted settings', then return here", Toast.LENGTH_LONG).show()
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Open phone Settings → Apps → Universal Clipboard", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     override fun onPause() {
@@ -378,6 +426,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        updateAccessibilityButton()
     }
 
     private fun startClipboardService(ip: String, token: String) {

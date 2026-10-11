@@ -345,12 +345,36 @@ def main():
                 "exp": sess.expires_at
             })
 
+        def on_disconnect_device(dev_id):
+            if server_loop_holder[0]:
+                asyncio.run_coroutine_threadsafe(server.disconnect_device(dev_id), server_loop_holder[0])
+
+        def on_remove_device(dev_id):
+            from desktop.config import remove_paired_device
+            remove_paired_device(dev_id)
+            if server_loop_holder[0]:
+                asyncio.run_coroutine_threadsafe(server.disconnect_device(dev_id), server_loop_holder[0])
+
+        def on_rename_device(dev_id, new_name):
+            from desktop.config import rename_paired_device
+            rename_paired_device(dev_id, new_name)
+            if tray_app_ref[0]:
+                active = server.get_active_client_info()
+                name = active[0]["name"] if active else None
+                tray_app_ref[0].update_connected_count(len(active), name)
+
         def run_gui():
+            from desktop.config import get_paired_devices
             win = DesktopConnectionWindow(
                 session,
                 on_cancel=lambda: server.clear_active_pairing_session(),
                 on_disconnect=on_disconnect,
-                on_refresh_session=on_refresh
+                on_refresh_session=on_refresh,
+                on_disconnect_device=on_disconnect_device,
+                on_remove_device=on_remove_device,
+                on_rename_device=on_rename_device,
+                get_paired_devices=get_paired_devices,
+                get_active_devices=lambda: server.get_active_client_info()
             )
             # Check if any client is already connected
             active = server.get_active_client_info()

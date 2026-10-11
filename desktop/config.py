@@ -165,3 +165,69 @@ def regenerate_master_key() -> str:
     save_config(config)
     logger.info("Master pairing key regenerated. All paired devices revoked.")
     return new_key
+
+
+def get_paired_devices() -> dict:
+    """Returns dictionary of paired devices: {device_id: device_info}."""
+    cfg = load_config()
+    return cfg.get("paired_devices", {})
+
+
+def add_or_update_paired_device(device_id: str, device_name: str, platform: str = "Android") -> dict:
+    """
+    Persistently stores or updates a paired device.
+    Reuses existing device identity without creating duplicate records.
+    """
+    import time
+    config = load_config()
+    if "paired_devices" not in config:
+        config["paired_devices"] = {}
+
+    now = time.time()
+    existing = config["paired_devices"].get(device_id, {})
+    paired_at = existing.get("paired_at", now)
+
+    config["paired_devices"][device_id] = {
+        "device_id": device_id,
+        "device_name": device_name,
+        "platform": platform,
+        "paired_at": paired_at,
+        "last_seen": now,
+        "status": "paired"
+    }
+    save_config(config)
+    logger.info(f"Saved paired device {device_name} ({device_id}) to persistent config.")
+    return config["paired_devices"][device_id]
+
+
+def remove_paired_device(device_id: str) -> bool:
+    """Removes a specific device from paired_devices without wiping other phones."""
+    config = load_config()
+    if "paired_devices" in config and device_id in config["paired_devices"]:
+        del config["paired_devices"][device_id]
+        save_config(config)
+        logger.info(f"Removed paired device {device_id} from persistent config.")
+        return True
+    return False
+
+
+def rename_paired_device(device_id: str, new_name: str) -> bool:
+    """Renames an existing paired device."""
+    config = load_config()
+    if "paired_devices" in config and device_id in config["paired_devices"]:
+        config["paired_devices"][device_id]["device_name"] = new_name
+        save_config(config)
+        logger.info(f"Renamed paired device {device_id} to '{new_name}'.")
+        return True
+    return False
+
+
+def update_device_last_seen(device_id: str) -> bool:
+    """Updates last_seen timestamp for a device."""
+    import time
+    config = load_config()
+    if "paired_devices" in config and device_id in config["paired_devices"]:
+        config["paired_devices"][device_id]["last_seen"] = time.time()
+        save_config(config)
+        return True
+    return False

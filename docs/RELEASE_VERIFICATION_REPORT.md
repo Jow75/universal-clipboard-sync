@@ -25,6 +25,7 @@ All build deliverables have been compiled, verified, and placed in `dist/`.
 ## 2. Android APK Package & Signature Verification
 
 ### 2.1 Package Metadata
+
 - **Application ID**: `com.example.universalclipboard`
 - **Version Code**: `2` (Incremented from `1` to enable in-place Android OS upgrades)
 - **Version Name**: `"1.1.0"`
@@ -33,11 +34,15 @@ All build deliverables have been compiled, verified, and placed in `dist/`.
 - **Compile SDK**: `35`
 
 ### 2.2 APK Signature Verification (`apksigner`)
+
 Command executed:
+
 ```powershell
 apksigner verify --verbose --print-certs dist\UniversalClipboard-Android-1.1.0.apk
 ```
+
 Output:
+
 - **Verifies**: `true`
 - **Verified using v1 scheme (JAR signing)**: `true`
 - **Verified using v2 scheme (APK Signature Scheme v2)**: `true`
@@ -47,6 +52,7 @@ Output:
 - **Signer #1 Certificate SHA-256 Digest**: `0e4c6c06a38fe484ff7a884a22ad39ec1adfb6d3f237f3747d4e5659fb16922d`
 
 ### 2.3 Upgrade Safety & Compatibility
+
 - **In-place Upgrade**: Users who installed previous debug/direct-download APKs signed with this consistent development certificate will be upgraded smoothly in-place by Android Package Manager without losing app data or Keystore pairing keys.
 - **Signature Mismatch Protection**: If a user previously installed an APK signed with an unrelated private commercial keystore, Android will block the upgrade with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`. In that case, the user must uninstall the old build before installing v1.1.0.
 
@@ -55,6 +61,7 @@ Output:
 ## 3. Automated Test Verification Results
 
 ### 3.1 Python Test Suite (Desktop)
+
 - **Command**: `python -m pytest -v`
 - **Total Tests**: 18
 - **Passed**: 18
@@ -63,6 +70,7 @@ Output:
 - **Coverage Areas**: Connection lifecycle, duplicate socket superseding, Windows clipboard retry with backoff, DPAPI configuration persistence, AES-256-GCM cipher round-trip, hotkey dispatch, UDP physical LAN interface filtering, ephemeral pairing session TTL expiration, mutual HMAC-SHA256 challenge authentication, and UI window state transitions.
 
 ### 3.2 Android Unit Test Suite (JVM)
+
 - **Command**: `.\android\gradlew.bat testDebugUnitTest`
 - **Total Tests**: 7
 - **Passed**: 7

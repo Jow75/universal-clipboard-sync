@@ -13,7 +13,7 @@ import json
 import logging
 import queue
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox, simpledialog
 from PIL import Image, ImageTk
 import qrcode
 from desktop.version import APP_NAME, APP_VERSION, CANONICAL_DOWNLOAD_PAGE
@@ -86,11 +86,18 @@ class DesktopConnectionWindow:
     - DOWNLOAD: Shows direct Wi-Fi & official GitHub release download links
     """
 
-    def __init__(self, session: PairingSession, on_cancel=None, on_disconnect=None, on_refresh_session=None):
+    def __init__(self, session: PairingSession, on_cancel=None, on_disconnect=None, on_refresh_session=None,
+                 on_disconnect_device=None, on_remove_device=None, on_rename_device=None,
+                 get_paired_devices=None, get_active_devices=None):
         self.session = session
         self.on_cancel = on_cancel
         self.on_disconnect = on_disconnect
         self.on_refresh_session = on_refresh_session
+        self.on_disconnect_device = on_disconnect_device
+        self.on_remove_device = on_remove_device
+        self.on_rename_device = on_rename_device
+        self.get_paired_devices_cb = get_paired_devices
+        self.get_active_devices_cb = get_active_devices
         self.download_url = f"http://{session.ip}:{session.port}/download"
         self.canonical_download_url = CANONICAL_DOWNLOAD_PAGE
 
@@ -114,6 +121,7 @@ class DesktopConnectionWindow:
         self.btn_tab_pair = None
         self.btn_tab_connected = None
         self.btn_tab_download = None
+        self.devices_list_frame = None
 
     def post_event(self, event_type: str, data=None):
         """Thread-safe event posting from server or other threads."""
@@ -303,94 +311,203 @@ class DesktopConnectionWindow:
 
     def _build_connected_tab(self):
         title_frame = tk.Frame(self.connected_frame, bg="#0D1B2A")
-        title_frame.pack(pady=(16, 6))
+        title_frame.pack(pady=(12, 4))
 
-        # Big positive indicator
-        status_badge = tk.Frame(title_frame, bg="#004D2C", padx=16, pady=6)
-        status_badge.pack(pady=(0, 8))
+        # Status badge
+        status_badge = tk.Frame(title_frame, bg="#004D2C", padx=14, pady=4)
+        status_badge.pack(pady=(0, 4))
 
-        lbl_status = tk.Label(
+        self.lbl_status = tk.Label(
             status_badge, text="🟢 CONNECTED TO ANDROID",
-            font=("Segoe UI", 13, "bold"), fg="#00FF99", bg="#004D2C"
+            font=("Segoe UI", 11, "bold"), fg="#00FF99", bg="#004D2C"
         )
-        lbl_status.pack()
+        self.lbl_status.pack()
 
         self.connected_device_label = tk.Label(
             title_frame, text=f"📱 {self.connected_device_name}",
-            font=("Segoe UI", 15, "bold"), fg="#FFFFFF", bg="#0D1B2A"
+            font=("Segoe UI", 13, "bold"), fg="#FFFFFF", bg="#0D1B2A"
         )
         self.connected_device_label.pack(pady=(2, 2))
 
         lbl_connected_sub = tk.Label(
             title_frame,
-            text="Active AES-256-GCM encrypted link over local Wi-Fi",
-            font=("Segoe UI", 9), fg="#00DD88", bg="#0D1B2A"
+            text="Local Wi-Fi link secured with AES-256-GCM + DPAPI",
+            font=("Segoe UI", 8), fg="#00DD88", bg="#0D1B2A"
         )
         lbl_connected_sub.pack()
 
-        # Info card
-        card = tk.Frame(self.connected_frame, bg="#1A2A3E", padx=16, pady=12)
-        card.pack(pady=12, padx=20, fill="x")
-
-        lbl_c1 = tk.Label(
-            card, text=f"Desktop Host: {self.session.server_name} ({self.session.ip}:{self.session.port})",
-            font=("Segoe UI", 9), fg="#CCD8E8", bg="#1A2A3E", anchor="w"
-        )
-        lbl_c1.pack(fill="x", pady=2)
-
-        lbl_c2 = tk.Label(
-            card, text="Security: AES-256-GCM + DPAPI Key Persistence",
-            font=("Segoe UI", 9), fg="#CCD8E8", bg="#1A2A3E", anchor="w"
-        )
-        lbl_c2.pack(fill="x", pady=2)
+        # Activity card
+        card = tk.Frame(self.connected_frame, bg="#1A2A3E", padx=12, pady=6)
+        card.pack(pady=4, padx=16, fill="x")
 
         self.last_sync_label = tk.Label(
             card, text=f"Sync Activity: {self.last_sync_info}",
-            font=("Segoe UI", 9, "bold"), fg="#00DD88", bg="#1A2A3E", anchor="w"
+            font=("Segoe UI", 8, "bold"), fg="#00DD88", bg="#1A2A3E", anchor="w"
         )
-        self.last_sync_label.pack(fill="x", pady=(4, 2))
+        self.last_sync_label.pack(fill="x")
 
-        # Instructions
-        inst_card = tk.Frame(self.connected_frame, bg="#112233", padx=14, pady=10)
-        inst_card.pack(pady=6, padx=20, fill="x")
-
-        lbl_guide = tk.Label(
-            inst_card,
-            text="• PC ➔ Phone: Copy anything (Ctrl+C) to auto-sync.\n"
-                 "• Phone ➔ PC: Tap '[ 📋 Send to PC ]' on notification shade,\n"
-                 "  or enable Seamless Auto-Sync in phone Accessibility.\n"
-                 "• Paste anywhere on Windows using Ctrl+V.",
-            font=("Segoe UI", 8), fg="#8EA5C0", bg="#112233", justify="left", anchor="w"
+        # Paired & Connected Devices container
+        lbl_dev_hdr = tk.Label(
+            self.connected_frame, text="PAIRED & CONNECTED PHONES",
+            font=("Segoe UI", 9, "bold"), fg="#8EA5C0", bg="#0D1B2A", anchor="w"
         )
-        lbl_guide.pack(fill="x")
+        lbl_dev_hdr.pack(fill="x", padx=18, pady=(6, 2))
+
+        # Container for dynamic devices list
+        self.devices_list_frame = tk.Frame(self.connected_frame, bg="#0D1B2A")
+        self.devices_list_frame.pack(fill="both", expand=True, padx=16, pady=2)
+
+        self._refresh_devices_list()
 
         # Action Buttons
         btn_box = tk.Frame(self.connected_frame, bg="#0D1B2A")
-        btn_box.pack(pady=14)
+        btn_box.pack(pady=8)
 
         btn_pair_new = tk.Button(
-            btn_box, text="🔗 Pair Another Phone", font=("Segoe UI", 9, "bold"),
+            btn_box, text="➕ Pair Another Phone", font=("Segoe UI", 9, "bold"),
             fg="#FFFFFF", bg="#0066CC", activebackground="#0055AA",
-            activeforeground="#FFFFFF", bd=0, padx=12, pady=6,
+            activeforeground="#FFFFFF", bd=0, padx=10, pady=5,
             cursor="hand2", command=self._show_pair_tab
         )
-        btn_pair_new.pack(side="left", padx=4)
+        btn_pair_new.pack(side="left", padx=3)
 
         btn_disconnect = tk.Button(
-            btn_box, text="🔌 Disconnect", font=("Segoe UI", 9, "bold"),
+            btn_box, text="Disconnect All", font=("Segoe UI", 9),
             fg="#FFFFFF", bg="#CC2244", activebackground="#AA1133",
-            activeforeground="#FFFFFF", bd=0, padx=12, pady=6,
+            activeforeground="#FFFFFF", bd=0, padx=10, pady=5,
             cursor="hand2", command=self._on_disconnect_click
         )
-        btn_disconnect.pack(side="left", padx=4)
+        btn_disconnect.pack(side="left", padx=3)
 
         btn_min = tk.Button(
             btn_box, text="Minimize to Tray", font=("Segoe UI", 9),
             fg="#CCD8E8", bg="#1A2A3E", activebackground="#243750",
-            activeforeground="#FFFFFF", bd=0, padx=12, pady=6,
+            activeforeground="#FFFFFF", bd=0, padx=10, pady=5,
             cursor="hand2", command=self.hide_to_tray
         )
-        btn_min.pack(side="left", padx=4)
+        btn_min.pack(side="left", padx=3)
+
+    def _refresh_devices_list(self):
+        """Rebuilds the list of paired and active devices in the UI."""
+        if not self.devices_list_frame or not self.root or not self.root.winfo_exists():
+            return
+
+        for child in self.devices_list_frame.winfo_children():
+            child.destroy()
+
+        paired = self.get_paired_devices_cb() if self.get_paired_devices_cb else {}
+        active = self.get_active_devices_cb() if self.get_active_devices_cb else []
+        active_ids = {d["id"]: d for d in active}
+
+        # Combine all device IDs
+        all_dev_ids = list(paired.keys())
+        for a in active:
+            if a["id"] not in all_dev_ids:
+                all_dev_ids.append(a["id"])
+
+        if not all_dev_ids:
+            if self.is_connected:
+                all_dev_ids = [self.connected_device_id or "default"]
+                paired = {all_dev_ids[0]: {"device_id": all_dev_ids[0], "device_name": self.connected_device_name, "platform": "Android"}}
+                active_ids = {all_dev_ids[0]: {"id": all_dev_ids[0], "name": self.connected_device_name}}
+
+        if not all_dev_ids:
+            lbl_empty = tk.Label(
+                self.devices_list_frame,
+                text="No phones paired yet.\nSwitch to 'Pair Phone' tab to scan the QR code.",
+                font=("Segoe UI", 9), fg="#5D738E", bg="#0D1B2A", pady=16
+            )
+            lbl_empty.pack()
+            return
+
+        for dev_id in all_dev_ids:
+            dev_info = paired.get(dev_id, {})
+            active_info = active_ids.get(dev_id)
+            is_active = active_info is not None
+
+            d_name = dev_info.get("device_name") or (active_info.get("name") if active_info else "Android Phone")
+            d_plat = dev_info.get("platform", "Android")
+
+            row_frame = tk.Frame(self.devices_list_frame, bg="#1A2A3E", padx=10, pady=6)
+            row_frame.pack(fill="x", pady=2)
+
+            info_col = tk.Frame(row_frame, bg="#1A2A3E")
+            info_col.pack(side="left", fill="x", expand=True)
+
+            lbl_name = tk.Label(
+                info_col, text=f"📱 {d_name}",
+                font=("Segoe UI", 9, "bold"), fg="#FFFFFF", bg="#1A2A3E", anchor="w"
+            )
+            lbl_name.pack(anchor="w")
+
+            status_text = "🟢 Active" if is_active else "⚪ Offline"
+            status_color = "#00DD88" if is_active else "#7B8FA8"
+            lbl_status = tk.Label(
+                info_col, text=f"{d_plat} • {status_text}",
+                font=("Segoe UI", 8), fg=status_color, bg="#1A2A3E", anchor="w"
+            )
+            lbl_status.pack(anchor="w")
+
+            btn_col = tk.Frame(row_frame, bg="#1A2A3E")
+            btn_col.pack(side="right")
+
+            btn_ren = tk.Button(
+                btn_col, text="✏️", font=("Segoe UI", 8),
+                fg="#CCD8E8", bg="#243750", bd=0, padx=6, pady=2,
+                cursor="hand2", command=lambda did=dev_id, dn=d_name: self._prompt_rename_device(did, dn)
+            )
+            btn_ren.pack(side="left", padx=2)
+
+            if is_active and self.on_disconnect_device:
+                btn_disc = tk.Button(
+                    btn_col, text="Disconnect", font=("Segoe UI", 8),
+                    fg="#FFAA00", bg="#243750", bd=0, padx=6, pady=2,
+                    cursor="hand2", command=lambda did=dev_id: self._disconnect_device(did)
+                )
+                btn_disc.pack(side="left", padx=2)
+
+            if self.on_remove_device:
+                btn_rem = tk.Button(
+                    btn_col, text="❌", font=("Segoe UI", 8),
+                    fg="#FF6666", bg="#243750", bd=0, padx=6, pady=2,
+                    cursor="hand2", command=lambda did=dev_id, dn=d_name: self._confirm_remove_device(did, dn)
+                )
+                btn_rem.pack(side="left", padx=2)
+
+    def _prompt_rename_device(self, device_id: str, old_name: str):
+        if not self.root or not self.root.winfo_exists():
+            return
+        new_name = simpledialog.askstring(
+            "Rename Device",
+            f"Enter new display name for '{old_name}':",
+            initialvalue=old_name,
+            parent=self.root
+        )
+        if new_name and new_name.strip():
+            clean_name = new_name.strip()
+            if self.on_rename_device:
+                self.on_rename_device(device_id, clean_name)
+            self._refresh_devices_list()
+
+    def _confirm_remove_device(self, device_id: str, device_name: str):
+        if not self.root or not self.root.winfo_exists():
+            return
+        confirm = messagebox.askyesno(
+            "Remove Paired Device",
+            f"Are you sure you want to remove '{device_name}'?\n\n"
+            "This will disconnect the phone and remove it from your trusted devices. "
+            "It will need to scan the pairing QR code again to reconnect.",
+            parent=self.root
+        )
+        if confirm:
+            if self.on_remove_device:
+                self.on_remove_device(device_id)
+            self._refresh_devices_list()
+
+    def _disconnect_device(self, device_id: str):
+        if self.on_disconnect_device:
+            self.on_disconnect_device(device_id)
+        self._refresh_devices_list()
 
     def _build_download_tab(self):
         title_frame = tk.Frame(self.download_frame, bg="#0D1B2A")
@@ -492,21 +609,39 @@ class DesktopConnectionWindow:
         self.is_connected = True
         self.connected_device_name = device_name
         self.session.is_completed = True
+        active = self.get_active_devices_cb() if self.get_active_devices_cb else []
+        count = len(active) if active else 1
+        title_str = f"📱 {count} Phones Connected" if count > 1 else f"📱 {device_name}"
         if self.connected_device_label and self.root and self.root.winfo_exists():
             try:
-                self.connected_device_label.config(text=f"📱 {device_name}")
+                self.connected_device_label.config(text=title_str)
+                self.btn_tab_connected.configure(text=f"🟢 Connected ({count})", fg="#FFFFFF")
+                self._refresh_devices_list()
                 self._show_connected_tab()
             except Exception as e:
                 logger.error(f"Error updating connected UI: {e}")
 
     def set_disconnected(self):
-        """Switches UI to disconnected state."""
-        self.is_connected = False
-        if self.root and self.root.winfo_exists():
-            try:
-                self.btn_tab_connected.configure(text="⚪ Offline", fg="#7B8FA8")
-            except Exception:
-                pass
+        """Switches UI to disconnected state or updates active device count."""
+        active = self.get_active_devices_cb() if self.get_active_devices_cb else []
+        count = len(active)
+        if count == 0:
+            self.is_connected = False
+            if self.root and self.root.winfo_exists():
+                try:
+                    self.btn_tab_connected.configure(text="⚪ Offline", fg="#7B8FA8")
+                    if self.connected_device_label:
+                        self.connected_device_label.config(text="📱 Paired Devices (Offline)")
+                except Exception:
+                    pass
+        else:
+            self.is_connected = True
+            if self.root and self.root.winfo_exists():
+                try:
+                    self.btn_tab_connected.configure(text=f"🟢 Connected ({count})", fg="#FFFFFF")
+                except Exception:
+                    pass
+        self._refresh_devices_list()
 
     def set_sync_info(self, info: str):
         self.last_sync_info = info
