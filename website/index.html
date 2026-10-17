@@ -447,6 +447,20 @@
         </div>
 
         <div class="downloads-wrapper">
+
+          <!-- Windows SmartScreen Informational Banner -->
+          <div class="smartscreen-tip-box" style="margin-bottom: 24px; padding: 18px 22px; background: rgba(0, 199, 183, 0.08); border: 1px solid rgba(0, 199, 183, 0.35); border-radius: var(--radius-md); display: flex; gap: 16px; align-items: flex-start;">
+            <div style="font-size: 1.6rem; line-height: 1; flex-shrink: 0; margin-top: 2px;">🛡️</div>
+            <div style="flex: 1; font-size: 0.9rem; line-height: 1.55;">
+              <strong style="color: var(--accent-cyan); display: block; margin-bottom: 4px; font-size: 0.95rem;">First-Time Windows Launch Note:</strong>
+              When launching <code>UniversalClipboard-Setup-1.1.0.exe</code> on Windows 10 or 11, Microsoft Defender SmartScreen may display a blue warning: <em>"Windows protected your PC (Publisher: Unknown publisher)"</em>.
+              Simply click <strong>"More info"</strong> &rarr; <strong>"Run anyway"</strong>.
+              <span style="color: var(--text-muted); display: block; margin-top: 6px; font-size: 0.84rem;">
+                As a free open-source project without a costly commercial enterprise EV certificate ($500/year), Microsoft builds cloud reputation as community downloads increase. Our binaries are signed with official BAZIQHUE Authenticode metadata and verified via the cryptographic SHA-256 hashes below. <a href="#faq-smartscreen" style="color: var(--accent-cyan); text-decoration: underline;">Read why in FAQ &darr;</a>
+              </span>
+            </div>
+          </div>
+
           <div class="download-tabs">
             <button class="tab-btn active" data-platform="all">All Platforms</button>
             <button class="tab-btn" data-platform="windows">Windows (Desktop)</button>
@@ -464,22 +478,27 @@
                 </p>
 
                 <div class="artifact-meta">
-                  <div><span>Format:</span> <span>.exe Installer</span></div>
-                  <div><span>Size:</span> <span data-config="winSetupSize">42.2 MB</span></div>
+                  <div><span>Format:</span> <span>.exe Installer (Signed)</span></div>
+                  <div><span>Size:</span> <span data-config="winSetupSize">42.3 MB</span></div>
                   <div><span>Version:</span> <span data-config="version">v1.1.0</span></div>
                   <div class="checksum-row">
-                    <span title="SHA-256 Hash" style="max-width:210px; overflow:hidden; text-overflow:ellipsis;" data-config="winSetupHash">a5df099ffbc718841f2172f21d250d0ba6c8e3c9336e08cc484d75e5f809c5ae</span>
-                    <button class="btn-copy-hash" data-hash="a5df099ffbc718841f2172f21d250d0ba6c8e3c9336e08cc484d75e5f809c5ae">Copy Hash</button>
+                    <span title="SHA-256 Hash" style="max-width:210px; overflow:hidden; text-overflow:ellipsis;" data-config="winSetupHash">c94e680a811d127c069ca3816aed2e55a582147de862c7ba5a8b2cbf72c724fd</span>
+                    <button class="btn-copy-hash" data-hash="c94e680a811d127c069ca3816aed2e55a582147de862c7ba5a8b2cbf72c724fd">Copy Hash</button>
                   </div>
                 </div>
               </div>
 
-              <a href="#" class="btn btn-primary" data-config="winSetupUrl" download>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.401H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.901-1.801"/>
-                </svg>
-                <span>Download Installer (.exe)</span>
-              </a>
+              <div>
+                <a href="#" class="btn btn-primary" data-config="winSetupUrl" download>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.401H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.901-1.801"/>
+                  </svg>
+                  <span>Download Installer (.exe)</span>
+                </a>
+                <div style="font-size: 0.77rem; color: var(--text-muted); margin-top: 8px; text-align: center;">
+                  🛡️ SmartScreen prompt? Click <strong>More info</strong> &rarr; <strong>Run anyway</strong>
+                </div>
+              </div>
             </div>
 
             <!-- Windows Portable Card -->
@@ -492,24 +511,29 @@
                 </p>
 
                 <div class="artifact-meta">
-                  <div><span>Format:</span> <span>.exe Standalone</span></div>
-                  <div><span>Size:</span> <span data-config="winPortSize">45.2 MB</span></div>
+                  <div><span>Format:</span> <span>.exe Standalone (Signed)</span></div>
+                  <div><span>Size:</span> <span data-config="winPortSize">45.3 MB</span></div>
                   <div><span>Version:</span> <span data-config="version">v1.1.0</span></div>
                   <div class="checksum-row">
-                    <span title="SHA-256 Hash" style="max-width:210px; overflow:hidden; text-overflow:ellipsis;" data-config="winPortHash">be603914ae5341d291ac7ae2198e9840cd84b319346f86ecd00bdc7e7de547ce</span>
-                    <button class="btn-copy-hash" data-hash="be603914ae5341d291ac7ae2198e9840cd84b319346f86ecd00bdc7e7de547ce">Copy Hash</button>
+                    <span title="SHA-256 Hash" style="max-width:210px; overflow:hidden; text-overflow:ellipsis;" data-config="winPortHash">0c4a0f2423688b935d3397202b738872f21d6ef497da356f31ef435dfceee41f</span>
+                    <button class="btn-copy-hash" data-hash="0c4a0f2423688b935d3397202b738872f21d6ef497da356f31ef435dfceee41f">Copy Hash</button>
                   </div>
                 </div>
               </div>
 
-              <a href="#" class="btn btn-secondary" data-config="winPortUrl" download>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                  <line x1="8" y1="21" x2="16" y2="21"></line>
-                  <line x1="12" y1="17" x2="12" y2="21"></line>
-                </svg>
-                <span>Download Portable (.exe)</span>
-              </a>
+              <div>
+                <a href="#" class="btn btn-secondary" data-config="winPortUrl" download>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                  <span>Download Portable (.exe)</span>
+                </a>
+                <div style="font-size: 0.77rem; color: var(--text-muted); margin-top: 8px; text-align: center;">
+                  🛡️ Portable standalone executable with BAZIQHUE metadata
+                </div>
+              </div>
             </div>
 
             <!-- Android APK Card -->
@@ -613,6 +637,33 @@
         </div>
 
         <div class="faq-list">
+          <details class="faq-item" id="faq-smartscreen" open>
+            <summary class="faq-question">Why does Windows SmartScreen say "Unknown Publisher" or "Windows protected your PC"?</summary>
+            <div class="faq-answer">
+              <p><strong>This is standard Windows behavior for newly released and independent open-source software.</strong></p>
+              <ul style="margin: 10px 0 14px 20px; line-height: 1.65;">
+                <li><strong>Why this happens:</strong> Microsoft Defender SmartScreen checks for established download volume in Microsoft's telemetry cloud, or an expensive commercial Extended Validation (EV) certificate ($400–$600 USD/year requiring physical hardware security tokens). As a free, community-driven open-source project without a corporate EV subscription, our binaries are digitally signed with BAZIQHUE Authenticode metadata, but have not yet built up thousands of downloads in Microsoft's cloud database.</li>
+                <li><strong>How to proceed (2 quick clicks):</strong>
+                  <ol style="margin: 6px 0 10px 20px; line-height: 1.6;">
+                    <li>When the blue <em>"Windows protected your PC"</em> dialog appears, click the underlined <strong>"More info"</strong> text.</li>
+                    <li>Click the <strong>"Run anyway"</strong> button that appears. The Universal Clipboard setup wizard will launch normally.</li>
+                  </ol>
+                </li>
+                <li><strong>Independent Hash Verification:</strong> You can verify binary integrity anytime by checking the SHA-256 checksum in Windows PowerShell:
+                  <div style="background:var(--bg-card); padding:10px 14px; border-radius:6px; margin:8px 0; font-family:var(--font-mono); font-size:0.83rem; overflow-x:auto; border:1px solid var(--border-medium);">
+                    Get-FileHash .\UniversalClipboard-Setup-1.1.0.exe -Algorithm SHA256
+                  </div>
+                  The output will exactly match our published checksum: <code>c94e680a811d127c069ca3816aed2e55a582147de862c7ba5a8b2cbf72c724fd</code>.
+                </li>
+                <li><strong>Direct Publisher Trust (Optional):</strong> For power users and system administrators who want Windows to display <em>"Verified publisher: BAZIQHUE"</em> without prompts on their machine, you can download our public certificate (<a href="assets/BAZIQHUE-CodeSigning.cer" download style="color:var(--accent-cyan); text-decoration:underline;">BAZIQHUE-CodeSigning.cer</a>) and import it into your Trusted Publishers store with one PowerShell command:
+                  <div style="background:var(--bg-card); padding:10px 14px; border-radius:6px; margin:8px 0; font-family:var(--font-mono); font-size:0.83rem; overflow-x:auto; border:1px solid var(--border-medium);">
+                    Import-Certificate -FilePath .\BAZIQHUE-CodeSigning.cer -CertStoreLocation Cert:\CurrentUser\TrustedPublisher
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </details>
+
           <details class="faq-item">
             <summary class="faq-question">Does Universal Clipboard require an active internet connection?</summary>
             <div class="faq-answer">

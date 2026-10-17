@@ -75,4 +75,5 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon='desktop/assets/icon.png',  # .exe file icon
+    version='windows/version_info.txt',
 )

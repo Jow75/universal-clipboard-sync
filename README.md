@@ -34,15 +34,17 @@ Scan this official download QR code with your phone camera to download the lates
 
 ---
 
-## 🔒 Verification & Checksums
+## 🔒 Verification & Authenticode Code Signing
 
-Users can verify binary integrity using SHA-256 checksums:
+Universal Clipboard Sync Windows executables are digitally stamped with **BAZIQHUE** metadata and signed with SHA-256 Authenticode. Users can verify binary integrity using SHA-256 checksums:
 
 ```text
-a5df099ffbc718841f2172f21d250d0ba6c8e3c9336e08cc484d75e5f809c5ae  UniversalClipboard-Setup-1.1.0.exe
-be603914ae5341d291ac7ae2198e9840cd84b319346f86ecd00bdc7e7de547ce  UniversalClipboard-Portable-1.1.0.exe
+c94e680a811d127c069ca3816aed2e55a582147de862c7ba5a8b2cbf72c724fd  UniversalClipboard-Setup-1.1.0.exe
+0c4a0f2423688b935d3397202b738872f21d6ef497da356f31ef435dfceee41f  UniversalClipboard-Portable-1.1.0.exe
 758e660d16f6e52d912f95e31fa05e579660fb76e6b8cdecfd5979bbf21e7d3c  UniversalClipboard-Android-1.1.0.apk
 ```
+
+> **🛡️ Note on Windows SmartScreen ("Unknown Publisher")**: When launching the installer for the first time, Microsoft Defender SmartScreen may display: *"Windows protected your PC"*. Simply click **More info** &rarr; **Run anyway**. This is standard Windows behavior for newly released open-source software before community download reputation builds in Microsoft's telemetry cloud.
 
 ---
 
@@ -78,6 +80,7 @@ be603914ae5341d291ac7ae2198e9840cd84b319346f86ecd00bdc7e7de547ce  UniversalClipb
 ### 1. Install on Windows
 
 1. Download `UniversalClipboard-Setup-1.1.0.exe` and run the installer.
+   - *If Windows Defender SmartScreen displays "Windows protected your PC":* Click **More info** &rarr; **Run anyway**.
 2. The application will launch into your **Windows System Tray** (near the clock).
 3. Right-click the tray icon and select **🖥️ Open Status Window** (or double-click the tray icon).
 

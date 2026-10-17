@@ -76,6 +76,8 @@ function bindConfigData() {
   });
   document.querySelectorAll("[data-config='winSetupHash']").forEach(el => {
     el.textContent = winSetup.sha256;
+    const copyBtn = el.parentElement ? el.parentElement.querySelector(".btn-copy-hash") : null;
+    if (copyBtn) copyBtn.setAttribute("data-hash", winSetup.sha256);
   });
 
   // Windows Portable Download
@@ -88,6 +90,8 @@ function bindConfigData() {
   });
   document.querySelectorAll("[data-config='winPortHash']").forEach(el => {
     el.textContent = winPort.sha256;
+    const copyBtn = el.parentElement ? el.parentElement.querySelector(".btn-copy-hash") : null;
+    if (copyBtn) copyBtn.setAttribute("data-hash", winPort.sha256);
   });
 
   // Android APK Download
@@ -100,6 +104,8 @@ function bindConfigData() {
   });
   document.querySelectorAll("[data-config='apkHash']").forEach(el => {
     el.textContent = apk.sha256;
+    const copyBtn = el.parentElement ? el.parentElement.querySelector(".btn-copy-hash") : null;
+    if (copyBtn) copyBtn.setAttribute("data-hash", apk.sha256);
   });
 }
 

@@ -1,8 +1,10 @@
 ; Script generated for Universal Clipboard Sync Windows Installer
 #define MyAppName "Universal Clipboard Sync"
 #define MyAppVersion "1.1.0"
-#define MyAppPublisher "Universal Clipboard Project"
-#define MyAppURL "https://github.com/Jow75/universal-clipboard-sync"
+#define MyAppPublisher "BAZIQHUE"
+#define MyAppURL "https://baziqhue.co.ke/"
+#define MyAppUpdatesURL "https://universal-clipboard.netlify.app/"
+#define MyAppSupportURL "mailto:gmuraguri75@gmail.com"
 #define MyAppExeName "UniversalClipboard.exe"
 
 [Setup]
@@ -12,8 +14,14 @@ AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
-AppSupportURL={#MyAppURL}
-AppUpdatesURL={#MyAppURL}
+AppSupportURL={#MyAppSupportURL}
+AppUpdatesURL={#MyAppUpdatesURL}
+VersionInfoCompany=BAZIQHUE
+VersionInfoDescription=Universal Clipboard Sync Setup Wizard
+VersionInfoVersion=1.1.0.0
+VersionInfoProductName=Universal Clipboard Sync
+VersionInfoProductVersion=1.1.0
+VersionInfoCopyright=Copyright (C) 2026 BAZIQHUE. All rights reserved.
 DefaultDirName={autopf}\UniversalClipboard
 DisableDirPage=no
 DisableProgramGroupPage=yes

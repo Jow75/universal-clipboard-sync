@@ -21,18 +21,18 @@ const SITE_CONFIG = {
       title: "Windows Installer (Recommended)",
       filename: "UniversalClipboard-Setup-1.1.0.exe",
       url: "https://github.com/Jow75/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Setup-1.1.0.exe",
-      size: "42.2 MB",
-      format: ".exe Installer",
-      sha256: "a5df099ffbc718841f2172f21d250d0ba6c8e3c9336e08cc484d75e5f809c5ae",
+      size: "42.3 MB",
+      format: ".exe Installer (Digitally Signed)",
+      sha256: "c94e680a811d127c069ca3816aed2e55a582147de862c7ba5a8b2cbf72c724fd",
       description: "Standard Windows installer with automatic Desktop & Start Menu shortcuts, system tray integration, and silent uninstaller."
     },
     windowsPortable: {
       title: "Windows Portable Standalone",
       filename: "UniversalClipboard-Portable-1.1.0.exe",
       url: "https://github.com/Jow75/universal-clipboard-sync/releases/download/v1.1.0/UniversalClipboard-Portable-1.1.0.exe",
-      size: "45.2 MB",
-      format: ".exe Standalone",
-      sha256: "be603914ae5341d291ac7ae2198e9840cd84b319346f86ecd00bdc7e7de547ce",
+      size: "45.3 MB",
+      format: ".exe Standalone (Digitally Signed)",
+      sha256: "0c4a0f2423688b935d3397202b738872f21d6ef497da356f31ef435dfceee41f",
       description: "Self-contained portable single executable. Run instantly without administrative privileges or installation."
     },
     androidApk: {

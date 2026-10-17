@@ -29,10 +29,20 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
+:: Copy to Portable release filename
+copy /y dist\UniversalClipboard.exe dist\UniversalClipboard-Portable-1.1.0.exe >nul
+
+:: Sign the binaries if signing script exists
+if exist "scripts\sign_windows_binaries.ps1" (
+    echo [Optional] Signing binaries with BAZIQHUE Authenticode...
+    powershell -ExecutionPolicy Bypass -File "scripts\sign_windows_binaries.ps1"
+)
+
 echo.
 echo ============================================
-echo  SUCCESS! Your .exe is ready:
+echo  SUCCESS! Your signed .exe is ready:
 echo  dist\UniversalClipboard.exe
+echo  dist\UniversalClipboard-Portable-1.1.0.exe
 echo ============================================
 echo.
 pause
