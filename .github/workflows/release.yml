@@ -42,6 +42,10 @@ jobs:
           choco install innosetup --no-progress -y
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer\UniversalClipboard.iss"
 
+      - name: Sign Windows Binaries
+        run: |
+          powershell -ExecutionPolicy Bypass -File "scripts\sign_windows_binaries.ps1"
+
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -49,6 +53,7 @@ jobs:
           path: |
             dist/UniversalClipboard-Setup-1.1.0.exe
             dist/UniversalClipboard-Portable-1.1.0.exe
+            dist/BAZIQHUE-CodeSigning.cer
 
   build-android:
     name: Build Android Release APK
@@ -119,6 +124,7 @@ jobs:
             dist/UniversalClipboard-Portable-1.1.0.exe
             dist/UniversalClipboard-Android-1.1.0.apk
             dist/SHA256SUMS.txt
+            dist/BAZIQHUE-CodeSigning.cer
             docs/assets/download_qr.png
           name: Universal Clipboard Sync v1.1.0
           draft: false
