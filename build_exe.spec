@@ -1,19 +1,21 @@
-# -*- mode: python ; coding: utf-8 -*-
+import os
 
 block_cipher = None
+
+bundle_datas = [
+    # Bundle the icon so tray.py and windows can find it inside the .exe
+    ('desktop/assets/icon.png', 'desktop/assets'),
+    ('desktop/assets/icon.png', 'assets'),
+]
+for apk_cand in ['UniversalClipboard-v1.1.0.apk', 'android/app/build/outputs/apk/release/app-release.apk']:
+    if os.path.exists(apk_cand):
+        bundle_datas.append((apk_cand, '.'))
 
 a = Analysis(
     ['desktop/main.py'],
     pathex=['.'],
     binaries=[],
-    datas=[
-        # Bundle the icon so tray.py and windows can find it inside the .exe
-        ('desktop/assets/icon.png', 'desktop/assets'),
-        ('desktop/assets/icon.png', 'assets'),
-        # Bundle the release APK so local Wi-Fi direct download (/download) always succeeds
-        ('UniversalClipboard-v1.1.0.apk', '.'),
-        ('android/app/build/outputs/apk/release/app-release.apk', '.'),
-    ],
+    datas=bundle_datas,
     hiddenimports=[
         'desktop.version',
         'desktop.pairing',
